@@ -224,3 +224,19 @@ The `dynamic? ToDynamic(DynamicXmlOptions?)` extension method takes an optional 
 for powerful customization of how the system works.
 
 **TODO Document options with examples**
+
+# Performance
+
+This is using dynamics, so if you are using it you are concerned with convenience over performance. You're probably a
+JavaScript developer at heart and despise type safety and static analysis.
+
+I personally recommend only using this in tool code or whilst prototyping. If you need raw performance you are not going
+to beat accessing the `XObject`s directly, or, better still, in some scenarios you simply cannot beat simple text
+parsing (e.g. Regular Expressions). However, you will often find that parsing input XML is not the main bottleneck in
+many use cases, so remember the old adage that _"performance is an engineering problem"_ and what to optimize your code
+until you identify the bottlenecks.
+
+Ultimately, it allows for very clean code, and actually does quite a bit to prevent some of the common errors (e.g. by
+returning and empty enumeration when no nodes are found, rather than `null`).
+
+**TODO Maybe do some benchmarks and add results here**
