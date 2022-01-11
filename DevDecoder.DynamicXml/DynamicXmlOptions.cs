@@ -4,9 +4,9 @@ using System.Xml.Linq;
 
 namespace DevDecoder.DynamicXml;
 
-public record class DynamicXOptions
+public record class DynamicXmlOptions
 {
-    public static readonly DynamicXOptions Default = new();
+    public static readonly DynamicXmlOptions Default = new();
 
     public ConvertMode ConvertMode = ConvertMode.ConvertOrDefault;
     public IndexResultIfNotFound IndexResultIfNotFound = IndexResultIfNotFound.Empty;

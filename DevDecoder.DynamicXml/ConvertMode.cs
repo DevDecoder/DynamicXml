@@ -2,7 +2,7 @@
 
 public enum ConvertMode
 {
-    ValueString,
+    AsString,
     ConvertOrDefault,
     ConvertOrThrow
 }

@@ -10,13 +10,13 @@ namespace DevDecoder.DynamicXml;
 
 internal sealed class DynamicXObject : DynamicObject
 {
-    private readonly DynamicXOptions _options;
+    private readonly DynamicXmlOptions _options;
     private readonly XObject _xObject;
 
-    internal DynamicXObject(XObject xObject, DynamicXOptions? options)
+    internal DynamicXObject(XObject xObject, DynamicXmlOptions? options)
     {
         _xObject = xObject;
-        _options = options ?? DynamicXOptions.Default;
+        _options = options ?? DynamicXmlOptions.Default;
     }
 
     /// <summary>
@@ -157,6 +157,7 @@ internal sealed class DynamicXObject : DynamicObject
 
         var builtInName = _options.GetBuiltInName(binder.Name);
         if (builtInName is not null)
+        {
             try
             {
                 result = _xObject.GetType().InvokeMember(
@@ -171,6 +172,7 @@ internal sealed class DynamicXObject : DynamicObject
             {
                 // ignored
             }
+        }
 
         switch (_options.InvokeResultIfNotFound)
         {
@@ -200,7 +202,7 @@ internal sealed class DynamicXObject : DynamicObject
         if (innerValue is not null)
         {
             // Try to convert inner value first
-            if (_options.ConvertMode == ConvertMode.ValueString || binder.Type == typeof(string))
+            if (_options.ConvertMode == ConvertMode.AsString || binder.Type == typeof(string))
             {
                 result = innerValue;
                 return true;
@@ -218,6 +220,12 @@ internal sealed class DynamicXObject : DynamicObject
         }
 
         // Try to convert XObject
+        if (_options.ConvertMode == ConvertMode.AsString || binder.Type == typeof(string))
+        {
+            result = _xObject.ToString();
+            return true;
+        }
+
         try
         {
             result = Convert.ChangeType(_xObject, binder.Type);
@@ -334,6 +342,13 @@ internal sealed class DynamicXObject : DynamicObject
                         yield return name;
                 }
             }
+    }
+
+    /// <inheritdoc />
+    public override string? ToString()
+    {
+        var value = GetInnerValue();
+        return value ?? _xObject.ToString();
     }
 
     public static implicit operator XObject(DynamicXObject xObject)

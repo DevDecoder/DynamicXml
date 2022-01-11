@@ -3,6 +3,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevDecoder.DynamicXml", "De
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevDecoder.DynamicXml.Test", "DevDecoder.DynamicXml.Test\DevDecoder.DynamicXml.Test.csproj", "{12B3491E-16C1-4F9F-A312-9870770A2669}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Non-project", "Non-project", "{12BF507A-1CF9-4342-9BEE-15AE2A16267D}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
