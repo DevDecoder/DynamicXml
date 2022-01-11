@@ -12,7 +12,8 @@ public record class DynamicXOptions
     public IndexResultIfNotFound IndexResultIfNotFound = IndexResultIfNotFound.Empty;
     public InvokeResultIfNotFound InvokeResultIfNotFound = InvokeResultIfNotFound.Empty;
     public PropertyResultIfNotFound PropertyResultIfNotFound = PropertyResultIfNotFound.Null;
-    public string? BuiltInPrefix { get; init; } = "__";
+
+    public string? BuiltInPrefix { get; init; } = string.Empty;
     public string? AttributePrefix { get; init; } = string.Empty;
     public string? ElementPrefix { get; init; } = string.Empty;
     public string? EnumPrefix { get; init; } = string.Empty;
@@ -22,13 +23,16 @@ public record class DynamicXOptions
     public bool ExposeElement => ElementPrefix is not null;
     public bool ExposeEnums => EnumPrefix is not null;
 
-    public Func<XNamespace, string, XName> GetXName { get; init; } = DefaultGetXName;
+    public StringComparer ElementComparer => StringComparer.Ordinal;
+    public StringComparer AttributeComparer => StringComparer.Ordinal;
+
+    public Func<string?, string?> GetXName { get; init; } = DefaultGetXName;
     public Func<XName, string> GetName { get; init; } = DefaultGetName;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static XName DefaultGetXName(XNamespace @namespace, string name)
+    public static string? DefaultGetXName(string? name)
     {
-        return @namespace + name;
+        return name;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -50,67 +54,34 @@ public record class DynamicXOptions
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private XName? StripXPrefix(XNamespace @namespace, string name, string? prefix)
-    {
-        var result = StripPrefix(name, prefix);
-        return result is null ? null : @namespace + result;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal string? GetBuiltInName(string name)
     {
-        return StripPrefix(name, BuiltInPrefix);
+        return GetXName(StripPrefix(name, BuiltInPrefix));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal XName? GetAttributeXName(XNamespace @namespace, string name)
+    internal string? GetAttributeName(string name)
     {
-        return StripXPrefix(@namespace, name, AttributePrefix);
+        return GetXName(StripPrefix(name, AttributePrefix));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal XName? GetElementXName(XNamespace @namespace, string name)
+    internal string? GetElementName(string name)
     {
-        return StripXPrefix(@namespace, name, ElementPrefix);
+        return GetXName(StripPrefix(name, ElementPrefix));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal XName? GetAttributesXName(XNamespace @namespace, string name)
+    internal string? GetAttributesName(string name)
     {
-        return StripXPrefix(@namespace, name,
-            EnumPrefix is null || ElementPrefix is null ? null : EnumPrefix + ElementPrefix);
+        return GetXName(StripPrefix(name,
+            EnumPrefix is null || ElementPrefix is null ? null : EnumPrefix + ElementPrefix));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal XName? GetElementsXName(XNamespace @namespace, string name)
+    internal string? GetElementsName(string name)
     {
-        return StripXPrefix(@namespace, name,
-            EnumPrefix is null || ElementPrefix is null ? null : EnumPrefix + ElementPrefix);
+        return GetXName(StripPrefix(name,
+            EnumPrefix is null || ElementPrefix is null ? null : EnumPrefix + ElementPrefix));
     }
-}
-
-public enum ConvertMode
-{
-    ValueString,
-    ConvertOrDefault,
-    ConvertOrThrow
-}
-
-public enum InvokeResultIfNotFound
-{
-    Null,
-    Empty,
-    Throw
-}
-
-public enum PropertyResultIfNotFound
-{
-    Null,
-    Throw
-}
-
-public enum IndexResultIfNotFound
-{
-    Empty,
-    Throw
 }

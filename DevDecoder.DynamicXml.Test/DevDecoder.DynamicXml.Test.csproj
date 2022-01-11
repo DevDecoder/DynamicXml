@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
 
         <IsPackable>false</IsPackable>
-        
+
         <RootNamespace>DevDecoder.DynamicXml.Test</RootNamespace>
     </PropertyGroup>
 
