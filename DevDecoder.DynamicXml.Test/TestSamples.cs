@@ -70,8 +70,8 @@ public class TestSamples
             }
 
             // If there is no Items node, `order.Items` will return `null` and the check will fail.
-            // If there are any `Item` nodes, then the `?.Item()` will return and `IEnumerable<dynamic>`
-            // the is check allows us to confirm this safely in one step, and also allows us to use LINQ operations
+            // If there are any `Item` nodes, then the `?.Item()` will return an `IEnumerable<dynamic>`
+            // the `is` check allows us to confirm this safely in one step, and also allows us to use LINQ operations
             // on the result (we can't use LINQ directly on the returned `dynamic` so the cast exposes the enumeration
             // first).
             if (order.Items?.Item() is IEnumerable<dynamic> items)
@@ -82,7 +82,7 @@ public class TestSamples
                 // Write out order summary
                 Console.WriteLine(
                     $"  {itemsArr.Length} item{(itemsArr.Length == 1 ? "" : "s")}" +
-                    // Note the double cast below will error if `USPrice` isn't a valid double.
+                    // Note the `double` cast below will error if `USPrice` isn't a valid double.
                     // A safer method would be to use a TryParse instead.
                     $" Total: ${itemsArr.Aggregate(0D, (total, item) => total + (double) item.USPrice):F2}");
 

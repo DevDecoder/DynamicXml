@@ -8,11 +8,20 @@ using System.Xml.Linq;
 
 namespace DevDecoder.DynamicXml;
 
+/// <summary>
+/// The <see cref="DynamicXObject"/> extends <see cref="DynamicObject"/> to implement dynamic access to any
+/// <see cref="XObject"/>.
+/// </summary>
 internal sealed class DynamicXObject : DynamicObject
 {
     private readonly DynamicXmlOptions _options;
     private readonly XObject _xObject;
 
+    /// <summary>
+    /// Create a new instance of <see cref="DynamicXObject"/>, with the <paramref name="options">specified options</paramref>
+    /// </summary>
+    /// <param name="xObject"></param>
+    /// <param name="options"></param>
     internal DynamicXObject(XObject xObject, DynamicXmlOptions? options)
     {
         _xObject = xObject;
@@ -253,7 +262,7 @@ internal sealed class DynamicXObject : DynamicObject
             if (_options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
                 throw new IndexOutOfRangeException("No child items");
 
-            result = Array.Empty<DynamicXObject>();
+            result = null;
             return true;
         }
 
@@ -262,7 +271,7 @@ internal sealed class DynamicXObject : DynamicObject
             if (_options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
                 throw new IndexOutOfRangeException("Multiple dimensions not supported");
 
-            result = Array.Empty<DynamicXObject>();
+            result = null;
             return true;
         }
 
@@ -272,7 +281,7 @@ internal sealed class DynamicXObject : DynamicObject
             if (_options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
                 throw new IndexOutOfRangeException("Indexer type must be convertible to long");
 
-            result = Array.Empty<DynamicXObject>();
+            result = null;
             return true;
         }
 
@@ -281,7 +290,8 @@ internal sealed class DynamicXObject : DynamicObject
         {
             if (_options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
                 throw new IndexOutOfRangeException($"Index out of range {index}");
-            result = Array.Empty<DynamicXObject>();
+
+            result = null;
             return true;
         }
 
@@ -294,7 +304,8 @@ internal sealed class DynamicXObject : DynamicObject
 
             if (_options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
                 throw new IndexOutOfRangeException($"Index out of range {index}");
-            result = Array.Empty<DynamicXObject>();
+
+            result = null;
             return true;
         } while (counter >= 0);
 
@@ -303,56 +314,9 @@ internal sealed class DynamicXObject : DynamicObject
     }
 
     /// <inheritdoc />
-    public override IEnumerable<string> GetDynamicMemberNames()
-    {
-        var seen = new HashSet<string>();
-
-        IEnumerable<XAttribute>? attributes;
-        if (_options.ExposeAttributes && (attributes = GetAttributes()) is not null)
-            foreach (var attribute in attributes)
-            {
-                var name = _options.AttributePrefix + _options.GetName(attribute.Name);
-                if (seen.Add(name))
-                {
-                    yield return name;
-                }
-                else if (_options.ExposeEnums)
-                {
-                    // Enumeration found, may have prefix
-                    name = _options.EnumPrefix + name;
-                    if (seen.Add(name))
-                        yield return name;
-                }
-            }
-
-        IEnumerable<XElement>? elements;
-        if (_options.ExposeElement && (elements = GetElements()) is not null)
-            foreach (var element in elements)
-            {
-                var name = _options.ElementPrefix + _options.GetName(element.Name);
-                if (seen.Add(name))
-                {
-                    yield return name;
-                }
-                else if (_options.ExposeEnums)
-                {
-                    // Enumeration found, may have prefix
-                    name = _options.EnumPrefix + name;
-                    if (seen.Add(name))
-                        yield return name;
-                }
-            }
-    }
-
-    /// <inheritdoc />
     public override string? ToString()
     {
         var value = GetInnerValue();
         return value ?? _xObject.ToString();
-    }
-
-    public static implicit operator XObject(DynamicXObject xObject)
-    {
-        return xObject._xObject;
     }
 }

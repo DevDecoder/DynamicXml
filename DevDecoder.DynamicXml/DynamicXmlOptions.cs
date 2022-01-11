@@ -6,39 +6,117 @@ namespace DevDecoder.DynamicXml;
 
 public record class DynamicXmlOptions
 {
+    /// <summary>
+    /// The default options.
+    /// </summary>
     public static readonly DynamicXmlOptions Default = new();
 
-    public ConvertMode ConvertMode = ConvertMode.ConvertOrDefault;
-    public IndexResultIfNotFound IndexResultIfNotFound = IndexResultIfNotFound.Empty;
-    public InvokeResultIfNotFound InvokeResultIfNotFound = InvokeResultIfNotFound.Empty;
-    public PropertyResultIfNotFound PropertyResultIfNotFound = PropertyResultIfNotFound.Null;
+    /// <summary>
+    /// Controls conversion of dynamic objects.
+    /// </summary>
+    public ConvertMode ConvertMode = ConvertMode.Default;
 
+    /// <summary>
+    /// Controls what to do when an index is not found.
+    /// </summary>
+    public IndexResultIfNotFound IndexResultIfNotFound = IndexResultIfNotFound.Default;
+
+    /// <summary>
+    /// Controls what to do when a method is not found.
+    /// </summary>
+    public InvokeResultIfNotFound InvokeResultIfNotFound = InvokeResultIfNotFound.Default;
+
+    /// <summary>
+    /// Controls what to do when a property is not found.
+    /// </summary>
+    public PropertyResultIfNotFound PropertyResultIfNotFound = PropertyResultIfNotFound.Default;
+
+    /// <summary>
+    /// Optional prefix for disambiguating built-in properties/methods; or <see langword="null"/> to disable
+    /// matching built-ins.
+    /// </summary>
     public string? BuiltInPrefix { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Optional prefix for disambiguating attributes; or <see langword="null"/> to disable
+    /// matching attributes.
+    /// </summary>
     public string? AttributePrefix { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Optional prefix for disambiguating elements; or <see langword="null"/> to disable
+    /// matching elements.
+    /// </summary>
     public string? ElementPrefix { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Optional prefix for disambiguating enumeration methods; or <see langword="null"/> to disable
+    /// matching enumeration methods.
+    /// </summary>
+    /// <remarks>
+    /// When looking for an enumeration this prefix is also prefixed to the appropriate <see cref="AttributePrefix"/> or
+    /// <see cref="ElementPrefix"/>.  For example, if set to `e` and, <see cref="AttributePrefix"/> is set to `a`, then
+    /// calling <code>node.eaChild()</code> will return all attributes called `Child`, or, if that fails, all child elements called
+    /// `aChild`.  Finally, it will look for a method on the `XObject` called `eaChild()`.
+    /// </remarks>
     public string? EnumPrefix { get; init; } = string.Empty;
 
+    /// <summary>
+    /// <see langword="true"/> if built-in methods and properties are exposed; otherwise, <see langword="false"/>.
+    /// </summary>
     public bool ExposeBuiltIns => BuiltInPrefix is not null;
+
+    /// <summary>
+    /// <see langword="true"/> if attributes are exposed; otherwise, <see langword="false"/>.
+    /// </summary>
     public bool ExposeAttributes => AttributePrefix is not null;
+
+    /// <summary>
+    /// <see langword="true"/> if elements are exposed; otherwise, <see langword="false"/>.
+    /// </summary>
     public bool ExposeElement => ElementPrefix is not null;
+
+    /// <summary>
+    /// <see langword="true"/> if enumerations are exposed; otherwise, <see langword="false"/>.
+    /// </summary>
     public bool ExposeEnums => EnumPrefix is not null;
 
-    public StringComparer ElementComparer => StringComparer.Ordinal;
-    public StringComparer AttributeComparer => StringComparer.Ordinal;
+    /// <summary>
+    /// Optional <see cref="StringComparer"/> that determines how an element's <see cref="XName.LocalName"/> is matched
+    /// with the requested dynamic member name.
+    /// </summary>
+    public StringComparer ElementComparer { get; init; } = StringComparer.Ordinal;
 
-    public Func<string?, string?> GetXName { get; init; } = DefaultGetXName;
-    public Func<XName, string> GetName { get; init; } = DefaultGetName;
+    /// <summary>
+    /// Optional <see cref="StringComparer"/> that determines how an attribute's <see cref="XName.LocalName"/> is matched
+    /// with the requested dynamic member name.
+    /// </summary>
+    public StringComparer AttributeComparer { get; init; } = StringComparer.Ordinal;
 
+    /// <summary>
+    /// Optional function that allows the mapping of a requested dynamic member name into the equivalent <see cref="XName.LocalName"/> for an attribute.
+    /// </summary>
+    public Func<string?, string?> MapToAttributeName { get; init; } = DefaultMapToName;
+
+    /// <summary>
+    /// Optional function that allows the mapping of a requested dynamic member name into the equivalent <see cref="XName.LocalName"/> for an attribute.
+    /// </summary>
+    public Func<string?, string?> MapToElementName { get; init; } = DefaultMapToName;
+
+    /// <summary>
+    /// Optional function that allows the mapping of a requested dynamic member name into the equivalent name for a built-in member.
+    /// </summary>
+    public Func<string?, string?> MapToBuiltInName { get; init; } = DefaultMapToName;
+
+    /// <summary>
+    /// The default mapper passes the <paramref name="name"/> straight through.
+    /// </summary>
+    /// <param name="name">The dynamic member name requested.</param>
+    /// <returns>The mapped name.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string? DefaultGetXName(string? name)
+    public static string? DefaultMapToName(string? name)
     {
         return name;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string DefaultGetName(XName name)
-    {
-        return name.LocalName;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -56,32 +134,32 @@ public record class DynamicXmlOptions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal string? GetBuiltInName(string name)
     {
-        return GetXName(StripPrefix(name, BuiltInPrefix));
+        return MapToBuiltInName(StripPrefix(name, BuiltInPrefix));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal string? GetAttributeName(string name)
     {
-        return GetXName(StripPrefix(name, AttributePrefix));
+        return MapToAttributeName(StripPrefix(name, AttributePrefix));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal string? GetElementName(string name)
     {
-        return GetXName(StripPrefix(name, ElementPrefix));
+        return MapToElementName(StripPrefix(name, ElementPrefix));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal string? GetAttributesName(string name)
     {
-        return GetXName(StripPrefix(name,
+        return MapToAttributeName(StripPrefix(name,
             EnumPrefix is null || ElementPrefix is null ? null : EnumPrefix + ElementPrefix));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal string? GetElementsName(string name)
     {
-        return GetXName(StripPrefix(name,
+        return MapToElementName(StripPrefix(name,
             EnumPrefix is null || ElementPrefix is null ? null : EnumPrefix + ElementPrefix));
     }
 }
