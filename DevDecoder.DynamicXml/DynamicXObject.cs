@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
 using System.Xml.Linq;
+
+namespace DevDecoder.DynamicXml;
 
 public abstract class DynamicXObject : DynamicObject
 {
-    protected readonly XObject XObject;
     protected readonly DynamicXOptions Options;
+    protected readonly XObject XObject;
 
     protected DynamicXObject(XObject xObject, DynamicXOptions? options)
     {
@@ -40,7 +40,7 @@ public abstract class DynamicXObject : DynamicObject
                 // ignored
             }
 
-        if (Options.ThrowIfNotFound)
+        if (Options.PropertyResultIfNotFound == PropertyResultIfNotFound.Throw)
             throw new InvalidOperationException($"Cannot invoke '{binder.Name}', not found!");
 
         result = null;
@@ -67,19 +67,34 @@ public abstract class DynamicXObject : DynamicObject
                 // ignored
             }
 
-        if (Options.ThrowIfNotFound)
-            throw new InvalidOperationException($"Cannot invoke '{binder.Name}', not found!");
-
-        result = null;
-        return true;
+        switch (Options.InvokeResultIfNotFound)
+        {
+            case InvokeResultIfNotFound.Empty:
+                result = Array.Empty<DynamicXElement>();
+                return true;
+            case InvokeResultIfNotFound.Throw:
+                throw new InvalidOperationException($"Cannot invoke '{binder.Name}', not found!");
+            case InvokeResultIfNotFound.Null:
+            default:
+                result = null;
+                return true;
+        }
     }
 
     /// <inheritdoc />
     public override bool TryConvert(ConvertBinder binder, out object? result)
     {
+        // Can always convert to the underlying XObject.
         if (binder.Type.IsInstanceOfType(XObject))
         {
             result = XObject;
+            return true;
+        }
+
+        if (Options.ConvertMode == ConvertMode.ValueString)
+        {
+            // Value strings use other overload when available.
+            result = null;
             return true;
         }
 
@@ -93,15 +108,110 @@ public abstract class DynamicXObject : DynamicObject
             // ignored
         }
 
-        if (Options.ThrowInvalidCast)
+        if (Options.ConvertMode == ConvertMode.ConvertOrThrow)
             throw new InvalidCastException($"Could not cast XML object to {binder.Type}");
 
         // Return default of requested type.
         result = binder.Type.IsValueType ? Activator.CreateInstance(binder.Type) : null;
         return true;
     }
-    
-    public static implicit operator XObject(DynamicXObject xObject) => xObject.XObject;
+
+    protected virtual bool TryConvert(string innerValue, ConvertBinder binder, out object? result)
+    {
+        // Can always convert to the underlying XObject.
+        if (binder.Type.IsInstanceOfType(XObject))
+        {
+            result = XObject;
+            return true;
+        }
+
+        if (Options.ConvertMode == ConvertMode.ValueString || binder.Type == typeof(string))
+        {
+            result = innerValue;
+            return true;
+        }
+
+        // Try to convert inner value first
+        try
+        {
+            result = Convert.ChangeType(innerValue, binder.Type);
+            return true;
+        }
+        catch
+        {
+            // ignored
+        }
+
+        // Try to convert XObject
+        try
+        {
+            result = Convert.ChangeType(XObject, binder.Type);
+            return true;
+        }
+        catch
+        {
+            // ignored
+        }
+
+        if (Options.ConvertMode == ConvertMode.ConvertOrThrow)
+            throw new InvalidCastException($"Could not cast XML object to {binder.Type}");
+
+        // Return default of requested type.
+        result = binder.Type.IsValueType ? Activator.CreateInstance(binder.Type) : null;
+        return true;
+    }
+
+    protected bool TryGetIndex(IEnumerable<DynamicXElement> items, object[] indexes, out object? result)
+    {
+        if (indexes.Length != 1)
+        {
+            if (Options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
+                throw new IndexOutOfRangeException("Multiple dimensions not supported");
+
+            result = Array.Empty<DynamicXElement>();
+            return true;
+        }
+
+        var iObj = indexes[0];
+        if (!(iObj is IConvertible convertible))
+        {
+            if (Options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
+                throw new IndexOutOfRangeException("Indexer type must be convertible to long.");
+
+            result = Array.Empty<DynamicXElement>();
+            return true;
+        }
+
+        var index = convertible.ToInt64(null);
+        if (index < 0)
+        {
+            if (Options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
+                throw new IndexOutOfRangeException($"Index out of range {index}");
+            result = Array.Empty<DynamicXElement>();
+            return true;
+        }
+
+        using var enumerator = items.GetEnumerator();
+        var counter = index;
+        do
+        {
+            counter--;
+            if (enumerator.MoveNext()) continue;
+
+            if (Options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
+                throw new IndexOutOfRangeException($"Index out of range {index}");
+            result = Array.Empty<DynamicXElement>();
+            return true;
+        } while (counter >= 0);
+
+        result = enumerator.Current;
+        return true;
+    }
+
+    public static implicit operator XObject(DynamicXObject xObject)
+    {
+        return xObject.XObject;
+    }
 }
 
 public sealed class DynamicXDocument : DynamicXObject
@@ -119,7 +229,7 @@ public sealed class DynamicXDocument : DynamicXObject
             document.Root.Name == Options.GetElementXName(document.Root.GetDefaultNamespace(), binder.Name))
         {
             // Expose Root property
-            result = new DynamicXElement(this, document.Root, Options);
+            result = new DynamicXElement(document.Root, Options);
             return true;
         }
 
@@ -134,42 +244,54 @@ public sealed class DynamicXDocument : DynamicXObject
         if (document.Root is null) yield break;
         yield return Options.GetName(document.Root.Name);
     }
-    
-    public static implicit operator XDocument(DynamicXDocument xDocument) => (XDocument)xDocument.XObject;
+
+    /// <inheritdoc />
+    public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object? result)
+    {
+        var root = ((XDocument) XObject).Root;
+        return TryGetIndex(
+            root is null
+                ? Enumerable.Empty<DynamicXElement>()
+                : new[] {new DynamicXElement(root, Options)},
+            indexes, out result);
+    }
+
+    public static implicit operator XDocument(DynamicXDocument xDocument)
+    {
+        return (XDocument) xDocument.XObject;
+    }
 }
 
 public sealed class DynamicXAttribute : DynamicXObject
 {
-    private readonly DynamicXElement _parent;
-
-    public DynamicXAttribute(DynamicXElement parent, XAttribute xObject, DynamicXOptions? options = null)
-        : base(xObject, options) => _parent = parent;
+    public DynamicXAttribute(XAttribute xObject, DynamicXOptions? options = null)
+        : base(xObject, options)
+    {
+    }
 
     public override bool TryConvert(ConvertBinder binder, out object? result)
     {
-        try
-        {
-            result = Convert.ChangeType(((XAttribute) XObject).Value, binder.Type);
-            return true;
-        }
-        catch
-        {
-            // ignored
-        }
-
-        return base.TryConvert(binder, out result);
+        return TryConvert(((XAttribute) XObject).Value, binder, out result);
     }
-    
-    public static implicit operator XAttribute(DynamicXAttribute xDocument) => (XAttribute)xDocument.XObject;
+
+    /// <inheritdoc />
+    public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object? result)
+    {
+        return TryGetIndex(Array.Empty<DynamicXElement>(), indexes, out result);
+    }
+
+    public static implicit operator XAttribute(DynamicXAttribute xDocument)
+    {
+        return (XAttribute) xDocument.XObject;
+    }
 }
 
 public sealed class DynamicXElement : DynamicXObject
 {
-    private readonly DynamicXObject _parent;
-
-    public DynamicXElement(DynamicXObject parent, XElement element, DynamicXOptions? options = null)
-        : base(element, options) =>
-        _parent = parent;
+    public DynamicXElement(XElement element, DynamicXOptions? options = null)
+        : base(element, options)
+    {
+    }
 
     /// <inheritdoc />
     public override bool TryGetMember(GetMemberBinder binder, out object? result)
@@ -181,7 +303,7 @@ public sealed class DynamicXElement : DynamicXObject
             var attribute = element.Attribute(name);
             if (attribute is not null)
             {
-                result = new DynamicXAttribute(this, attribute, Options);
+                result = new DynamicXAttribute(attribute, Options);
                 return true;
             }
         }
@@ -192,7 +314,7 @@ public sealed class DynamicXElement : DynamicXObject
             var el = element.Element(name);
             if (el is not null)
             {
-                result = new DynamicXElement(this, el, Options);
+                result = new DynamicXElement(el, Options);
                 return true;
             }
         }
@@ -207,12 +329,13 @@ public sealed class DynamicXElement : DynamicXObject
         {
             var element = (XElement) XObject;
             var name = Options.GetAttributesXName(element.GetDefaultNamespace(), binder.Name);
+            // ReSharper disable PossibleMultipleEnumeration
             if (name is not null)
             {
                 var attributes = element.Attributes(name);
                 if (attributes.Any())
                 {
-                    result = attributes.Select(attribute => new DynamicXAttribute(this, attribute, Options));
+                    result = attributes.Select(attribute => new DynamicXAttribute(attribute, Options));
                     return true;
                 }
             }
@@ -223,10 +346,11 @@ public sealed class DynamicXElement : DynamicXObject
                 var el = element.Elements(name);
                 if (el.Any())
                 {
-                    result = el.Select(e => new DynamicXElement(this, e, Options));
+                    result = el.Select(e => new DynamicXElement(e, Options));
                     return true;
                 }
             }
+            // ReSharper restore PossibleMultipleEnumeration
         }
 
         return base.TryInvokeMember(binder, args, out result);
@@ -235,17 +359,7 @@ public sealed class DynamicXElement : DynamicXObject
     /// <inheritdoc />
     public override bool TryConvert(ConvertBinder binder, out object? result)
     {
-        try
-        {
-            result = Convert.ChangeType(((XElement) XObject).Value, binder.Type);
-            return true;
-        }
-        catch
-        {
-            // ignored
-        }
-
-        return base.TryConvert(binder, out result);
+        return TryConvert(((XElement) XObject).Value, binder, out result);
     }
 
     /// <inheritdoc />
@@ -254,38 +368,33 @@ public sealed class DynamicXElement : DynamicXObject
         var seen = new HashSet<string>();
         var element = (XElement) XObject;
         if (Options.ExposeAttributes)
-        {
             foreach (var attribute in element.Attributes())
             {
                 var name = Options.AttributePrefix + Options.GetName(attribute.Name);
                 if (seen.Add(name))
                     yield return name;
             }
-        }
 
         if (Options.ExposeElement)
-        {
             foreach (var el in element.Elements())
             {
                 var name = Options.ElementPrefix + Options.GetName(el.Name);
                 if (seen.Add(name))
                     yield return name;
             }
-        }
     }
 
     /// <inheritdoc />
     public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object? result)
     {
-        if (indexes.Length != 1)
-        {
-            result = null;
-            return false;
-        }
-
-        result = new DynamicXElement(this, ((XElement) XObject).Elements().Skip((int) indexes[0]).First(), Options);
-        return true;
+        return TryGetIndex(
+            ((XElement) XObject).Elements().Select(el => new DynamicXElement(el, Options)),
+            indexes,
+            out result);
     }
-    
-    public static implicit operator XElement(DynamicXElement xElement) => (XElement)xElement.XObject;
+
+    public static implicit operator XElement(DynamicXElement xElement)
+    {
+        return (XElement) xElement.XObject;
+    }
 }
