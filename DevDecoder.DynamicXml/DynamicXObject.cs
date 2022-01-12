@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
+using System.Xml.XPath;
 
 namespace DevDecoder.DynamicXml;
 
@@ -50,14 +52,7 @@ internal sealed class DynamicXObject : DynamicObject
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private IEnumerable<XElement>? GetElements()
     {
-        return _xObject switch
-        {
-            XDocument xDocument => xDocument.Root is null
-                ? null
-                : Enumerable.Repeat(xDocument.Root, 1),
-            XElement xElement => xElement.Elements(),
-            _ => null
-        };
+        return (_xObject as XContainer)?.Elements();
     }
 
     /// <summary>
@@ -256,60 +251,117 @@ internal sealed class DynamicXObject : DynamicObject
     /// <inheritdoc />
     public override bool TryGetIndex(GetIndexBinder binder, object[] indexes, out object? result)
     {
-        var items = GetElements();
-        if (items is null)
+        // Used when index out of range
+        bool Fail(Func<string> msg, out object? r)
         {
             if (_options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
-                throw new IndexOutOfRangeException("No child items");
-
-            result = null;
+                throw new IndexOutOfRangeException(msg());
+            r = null;
             return true;
         }
 
-        if (indexes.Length != 1)
+        if (indexes.Length < 1)
         {
-            if (_options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
-                throw new IndexOutOfRangeException("Multiple dimensions not supported");
-
-            result = null;
-            return true;
+            // TODO Check is this even possible?
+            return Fail(() => "Must supply at least one dimension", out result);
         }
 
-        var iObj = indexes[0];
-        if (!(iObj is IConvertible convertible))
-        {
-            if (_options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
-                throw new IndexOutOfRangeException("Indexer type must be convertible to long");
+        // Set starting object.
+        var xObject = _xObject;
 
-            result = null;
-            return true;
+        // Loop through indices
+        for (long i = 0; i < indexes.LongLength; i++)
+        {
+            if (xObject is not XNode xNode)
+            {
+                return Fail(() => $"Index #1 out of range: only valid on XNode", out result);
+            }
+
+            var iObj = indexes[i];
+            bool? isInt;
+            if (!(iObj is IConvertible convertible) ||
+                (isInt = ((int) convertible.GetTypeCode()) switch
+                {
+                    // Integer types (excluding UInt64 which can overflow a long)
+                    > 4 and < 12 => true,
+                    // String
+                    18 => false,
+                    // Everything else is invalid
+                    _ => null
+                }) is null)
+            {
+                return Fail(() => $"Index #{i + 1} type must be an integer or a string", out result);
+            }
+
+            if (isInt == true)
+            {
+                if (xNode is not XContainer container)
+                {
+                    return Fail(() => $"Index #1 out of range: only valid on XContainer", out result);
+                }
+
+                // We have an integer, should be able to safely convert to long, as we don't allow UInt64.
+                var index = convertible.ToInt64(null);
+                if (index < 0)
+                {
+                    return Fail(() => $"Index #{i + 1} out of range: {index} is negative", out result);
+                }
+
+                // Skip 
+                using var enumerator = container.Nodes().GetEnumerator();
+                var counter = index;
+                do
+                {
+                    counter--;
+                    if (enumerator.MoveNext()) continue;
+
+                    return Fail(() => $"Index #{i + 1} out of range: {index} > {index - counter - 1}", out result);
+                } while (counter >= 0);
+
+                xObject = enumerator.Current;
+            }
+            else
+            {
+                var index = convertible.ToString(null);
+                if (string.IsNullOrWhiteSpace(index))
+                {
+                    return Fail(() => $"Index #{i + 1} out of range: null or whitespace", out result);
+                }
+
+                // We have a string, try to parse it as an XPath
+                object evaluation;
+                try
+                {
+                    evaluation = xNode.XPathEvaluate(index);
+                }
+                catch (Exception exception)
+                {
+                    return Fail(() => $"Index #{i + 1} out of range: {index} threw exception - {exception.Message}",
+                        out result);
+                }
+
+                switch (evaluation)
+                {
+                    case XObject o:
+                        xObject = o;
+                        break;
+                    case IEnumerable<object> e:
+                        xObject = e.OfType<XObject>().FirstOrDefault();
+                        break;
+                    default:
+                        if (i < indexes.Length - 1)
+                            return Fail(() => $"Index #{i + 1} out of range: {index} did not return an enumeration",
+                                out result);
+
+                        // We are at the end of the index, so we can return the value
+                        result = evaluation;
+                        return true;
+                }
+            }
         }
 
-        var index = convertible.ToInt64(null);
-        if (index < 0)
-        {
-            if (_options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
-                throw new IndexOutOfRangeException($"Index out of range {index}");
-
-            result = null;
-            return true;
-        }
-
-        using var enumerator = items.GetEnumerator();
-        var counter = index;
-        do
-        {
-            counter--;
-            if (enumerator.MoveNext()) continue;
-
-            if (_options.IndexResultIfNotFound == IndexResultIfNotFound.Throw)
-                throw new IndexOutOfRangeException($"Index out of range {index}");
-
-            result = null;
-            return true;
-        } while (counter >= 0);
-
-        result = enumerator.Current.ToDynamic();
+        // Found object
+        result = xObject.ToDynamic();
         return true;
     }
 

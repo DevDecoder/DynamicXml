@@ -179,11 +179,71 @@ If it doesn't find any of the above, then the result depends on the `InvokeResul
 
 ## Indexer
 
-When you try to access an element using an indexer (e.g. `node[0]`), _with a single dimension_, from the dynamic it
-looks for the child element at the specified index. It does not search attributes, or expose comments/text.
+Easily the most powerful feature is the indexer system, that allows for complex, and efficient, navigation of the
+document.
 
-If it doesn't find a child element at the specified position, or the wrong dimensionality is specified (
-e.g. `node[1,2]`), then the result depends on the `IndexResultIfNotFound` option.
+The dynamic accepts a multidimensional indexer, where each index can be either an integer (any integer type
+except `UInt64` is allowed), or an [XPath string](https://www.w3schools.com/xml/xpath_syntax.asp).
+
+The Integer index will return for the n'th child _element_ of the current `XNode` (i.e. `XElement` or `XDocument`), as
+you specify extra dimensions, it will continue down the tree. For example `purchaseOrders[0]` returns the
+first `PurchaseOrder` element, whilst `purchaseOrders[1,1]` returns the second `Address` element of the
+second `PurchaseOrder` element.
+
+You can also supply an [XPath](https://developer.mozilla.org/en-US/docs/Web/XPath) which allows for extremely powerful
+searching.
+
+* If the XPath leads to a `bool` (e.g. by using
+  the [`boolean()` function](https://developer.mozilla.org/en-US/docs/Web/XPath/Functions/boolean)), `double` or
+  a `string` then it must be the final index as the result is the type and not another dynamic.
+* If the XPath refers to one or more `XObject`s, then the first one is returned as dynamic. For more detail, refer to
+  the [documentation for `XPathEvaulate`](https://docs.microsoft.com/en-us/dotnet/api/system.xml.xpath.extensions.xpathevaluate?view=net-6.0)
+  .
+* If the XPath refers to an `XContainer` (i.e. an `XDocument` or `XElement`), then further index dimensions can be used
+  to continue navigation.
+* Using XPath indices allows us to access other `XObject` types, like comments (`XComment`) and text (`XText`) which are
+  also returned as dynamic objects.
+
+As explained, you can easily mix both indexer types in a single lookup:
+
+```csharp
+// The select the first `PurchaseOrder` element, then the 3 child (`Items`), and then the second `Item` element
+// Finally it executes the `text()[2]` XPath to return the second text node, which we cast to an `XText` (from the
+// dynanic result).
+XText text = purchaseOrders[0,3,1,"text()[2]"];
+```
+
+Note a subtlety with the way XPaths are interpreted, the above is *NOT* equivalent to:
+
+```csharp
+// The following results in `null` (or throws an IndexOutOfRangeException if the `IndexResultIfNotFound` is set to `Throw`
+var text = purchaseOrders[0,3,1,"text()",2];
+```
+
+The reason as that the `text()` XPath returns an enumeration of `XText` nodes, _of which the first is selected_. Indeed,
+if you did not specify the final index the result would be the first `XText` node, so the following are equivalent:
+
+```csharp
+XText text = purchaseOrders[0,3,1,"text()[1]"];
+
+// The following is equivalent as we pick the first XObject returned from the XPath.
+XText equivalent = purchaseOrders[0,3,1,"text()"];
+```
+
+As `XText` nodes do not descend from `XContainer` they do not have children, therefore the `2` index is effectively out
+of range. For this reason, if you wish to work with an element other than the first returned by an XPath, you must
+specify the index in the XPath itself, rather than in a subsequent index - e.g. the following is valid:
+
+```csharp
+// This gets the 3rd child node (1-indexed) from the second purchase order (0-indexed). 
+var node = purchaseOrders["/PurchaseOrders/PurchaseOrder[2]", 2];
+```
+
+_This highlights another common gotcha, annoyingly XPath's are 1-indexed, unlike the C# language which is 0-indexed._
+
+If the indexer doesn't find a child element at the specified position, then the result depends on
+the `IndexResultIfNotFound`
+option; by default it returns a `null`, but you can change the behaviour to throw an `IndexOutOfRangeException` instead.
 
 ## ToString
 
@@ -235,6 +295,11 @@ to beat accessing the `XObject`s directly, or, better still, in some scenarios y
 parsing (e.g. Regular Expressions). However, you will often find that parsing input XML is not the main bottleneck in
 many use cases, so remember the old adage that _"performance is an engineering problem"_ and what to optimize your code
 until you identify the bottlenecks.
+
+The main way to improve performance is to avoid creation of dynamic objects. This is best done by navigating to the
+point of interest before casting to a dynamic. Of course, you can do this using LINQ to XML, though at that point there
+is little reason to continue using the library, or, you should make use of the
+[indexer functionality](#indexer) to get to the desired node.
 
 Ultimately, it allows for very clean code, and actually does quite a bit to prevent some of the common errors (e.g. by
 returning and empty enumeration when no nodes are found, rather than `null`).

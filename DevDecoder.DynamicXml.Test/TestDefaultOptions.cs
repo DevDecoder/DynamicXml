@@ -25,19 +25,6 @@ public class TestDefaultOptions
     }
 
     [Fact]
-    public void TestIndex()
-    {
-        var document = TestHelpers.GetTestDocument();
-        var purchaseOrders = document.PurchaseOrders;
-        Assert.NotNull(purchaseOrders);
-
-        var second = purchaseOrders[1];
-        Assert.NotNull(second);
-
-        Assert.Equal(((XElement) purchaseOrders).Elements().Skip(1).First(), (XElement) second);
-    }
-
-    [Fact]
     public void TestBuiltIns()
     {
         var document = TestHelpers.GetTestDocument();
@@ -56,7 +43,7 @@ public class TestDefaultOptions
         var purchaseOrders = document.PurchaseOrders;
         Assert.NotNull(purchaseOrders);
 
-        var second = purchaseOrders[1];
+        var second = purchaseOrders[2];
         Assert.NotNull(second);
 
         DateTime date = second.OrderDate;

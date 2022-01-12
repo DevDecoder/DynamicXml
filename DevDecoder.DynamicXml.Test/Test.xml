@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PurchaseOrders>
+    <!-- A comment -->
     <PurchaseOrder PurchaseOrderNumber="99503" OrderDate="1999-10-20">
         <Address Type="Shipping">
             <Name>Ellen Adams</Name>
@@ -26,7 +27,9 @@
                 <Comment>Confirm this is electric</Comment>
             </Item>
             <Item PartNumber="926-AA">
+                This is some text!
                 <ProductName>Baby Monitor</ProductName>
+                A second text node!
                 <Quantity>2</Quantity>
                 <USPrice>39.98</USPrice>
                 <ShipDate>1999-05-21</ShipDate>
