@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -26,8 +25,10 @@ public class TestSamples
         // Load XML from embedded file.
         XDocument xDocument;
         using (var stream = Assembly.GetExecutingAssembly()
-                   .GetManifestResourceStream($"{this.GetType().Namespace}.Test.xml")!)
+                   .GetManifestResourceStream($"{GetType().Namespace}.Test.xml")!)
+        {
             xDocument = XDocument.Load(stream);
+        }
 
         // Convert to dynamic object
         var document = xDocument.ToDynamic();
@@ -51,11 +52,9 @@ public class TestSamples
 
             // By default, if the node is missing we get a null back.
             if (deliveryNote is not null)
-            {
                 // The default ToString() method of `DynamicXObject` casts to string, so for elements, attributes,
                 // comments and text, it returns the inner value.
                 Console.WriteLine($"  Note: {deliveryNote}");
-            }
 
             // We can also enumerate over Address nodes
             foreach (var address in order.Address())
@@ -87,10 +86,7 @@ public class TestSamples
                     $" Total: ${itemsArr.Aggregate(0D, (total, item) => total + (double) item.USPrice):F2}");
 
                 // Iterate over each `Item` node
-                foreach (var item in items)
-                {
-                    Console.WriteLine($"    {item.PartNumber} @ ${item.USPrice}");
-                }
+                foreach (var item in items) Console.WriteLine($"    {item.PartNumber} @ ${item.USPrice}");
             }
 
             Console.WriteLine("");

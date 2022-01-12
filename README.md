@@ -143,7 +143,7 @@ foreach (var order in purchaseOrders.PurchaseOrder())
 
 # Dynamic members
 
-The `dynamic` exposes the following members (note they are not available until runtime):
+The dynamic object exposes the following members (note they are not available until runtime):
 
 ## Properties
 
@@ -287,21 +287,31 @@ for powerful customization of how the system works.
 
 # Performance
 
-This is using dynamics, so if you are using it you are concerned with convenience over performance. You're probably a
-JavaScript developer at heart and despise type safety and static analysis.
+_This is using dynamics, so if you are using it you are concerned with convenience over performance. You're probably a
+JavaScript developer at heart and despise type safety and static analysis :fire:!_
 
-I personally recommend only using this in tool code or whilst prototyping. If you need raw performance you are not going
-to beat accessing the `XObject`s directly, or, better still, in some scenarios you simply cannot beat simple text
+_I personally recommend only using this in tool code or whilst prototyping. If you need raw performance you are not
+going to beat accessing the `XObject`s directly, or, better still, in some scenarios you simply cannot beat simple text
 parsing (e.g. Regular Expressions). However, you will often find that parsing input XML is not the main bottleneck in
 many use cases, so remember the old adage that _"performance is an engineering problem"_ and what to optimize your code
-until you identify the bottlenecks.
+until you identify the bottlenecks._
 
 The main way to improve performance is to avoid creation of dynamic objects. This is best done by navigating to the
 point of interest before casting to a dynamic. Of course, you can do this using LINQ to XML, though at that point there
-is little reason to continue using the library, or, you should make use of the
-[indexer functionality](#indexer) to get to the desired node.
+is little reason to continue using the library.
 
-Ultimately, it allows for very clean code, and actually does quite a bit to prevent some of the common errors (e.g. by
-returning and empty enumeration when no nodes are found, rather than `null`).
+The library itself does an excellent job of avoiding creating dynamic objects until it needs to and once created it
+caches them again the associated `XObject`, meaning there will be a maximum of one `DynamicXObject` per `XObject` in a
+document (note, however, that using the dynamic also creates additional objects -
+[see the notes on implementing IDynamicMetaObjectProvider ](https://docs.microsoft.com/en-us/dotnet/api/system.dynamic.idynamicmetaobjectprovider?view=net-6.0))
+.
+
+For this reason, you should make liberal use of the
+[indexer functionality](#indexer) to get to the desired node, whenever possible, as it too avoids creating dynamics
+until it returns a result.
+
+Ultimately, the library allows for very clean code, and actually does quite a bit to prevent some of the common errors (
+e.g. by returning an empty enumeration when no nodes are found, rather than `null`). That trade off makes it ideal for
+many use cases, where the performance is still more than sufficient.
 
 **TODO Maybe do some benchmarks and add results here**

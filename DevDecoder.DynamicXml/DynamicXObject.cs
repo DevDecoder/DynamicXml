@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
@@ -11,8 +10,8 @@ using System.Xml.XPath;
 namespace DevDecoder.DynamicXml;
 
 /// <summary>
-/// The <see cref="DynamicXObject"/> extends <see cref="DynamicObject"/> to implement dynamic access to any
-/// <see cref="XObject"/>.
+///     The <see cref="DynamicXObject" /> extends <see cref="DynamicObject" /> to implement dynamic access to any
+///     <see cref="XObject" />.
 /// </summary>
 internal sealed class DynamicXObject : DynamicObject
 {
@@ -20,7 +19,8 @@ internal sealed class DynamicXObject : DynamicObject
     private readonly XObject _xObject;
 
     /// <summary>
-    /// Create a new instance of <see cref="DynamicXObject"/>, with the <paramref name="options">specified options</paramref>
+    ///     Create a new instance of <see cref="DynamicXObject" />, with the
+    ///     <paramref name="options">specified options</paramref>
     /// </summary>
     /// <param name="xObject"></param>
     /// <param name="options"></param>
@@ -141,7 +141,7 @@ internal sealed class DynamicXObject : DynamicObject
                 var attributes = xElement.Attributes(name);
                 if (attributes.Any())
                 {
-                    result = attributes.Select(attribute => new DynamicXObject(attribute, _options));
+                    result = attributes.Select(attribute => attribute.ToDynamic(_options));
                     return true;
                 }
             }
@@ -152,7 +152,7 @@ internal sealed class DynamicXObject : DynamicObject
                 var elements = xElement.Elements(name);
                 if (elements.Any())
                 {
-                    result = elements.Select(element => new DynamicXObject(element, _options));
+                    result = elements.Select(element => element.ToDynamic(_options));
                     return true;
                 }
             }
@@ -161,7 +161,6 @@ internal sealed class DynamicXObject : DynamicObject
 
         var builtInName = _options.GetBuiltInName(binder.Name);
         if (builtInName is not null)
-        {
             try
             {
                 result = _xObject.GetType().InvokeMember(
@@ -176,7 +175,6 @@ internal sealed class DynamicXObject : DynamicObject
             {
                 // ignored
             }
-        }
 
         switch (_options.InvokeResultIfNotFound)
         {
@@ -261,10 +259,8 @@ internal sealed class DynamicXObject : DynamicObject
         }
 
         if (indexes.Length < 1)
-        {
             // TODO Check is this even possible?
             return Fail(() => "Must supply at least one dimension", out result);
-        }
 
         // Set starting object.
         var xObject = _xObject;
@@ -272,15 +268,12 @@ internal sealed class DynamicXObject : DynamicObject
         // Loop through indices
         for (long i = 0; i < indexes.LongLength; i++)
         {
-            if (xObject is not XNode xNode)
-            {
-                return Fail(() => $"Index #1 out of range: only valid on XNode", out result);
-            }
+            if (xObject is not XNode xNode) return Fail(() => "Index #1 out of range: only valid on XNode", out result);
 
             var iObj = indexes[i];
             bool? isInt;
             if (!(iObj is IConvertible convertible) ||
-                (isInt = ((int) convertible.GetTypeCode()) switch
+                (isInt = (int) convertible.GetTypeCode() switch
                 {
                     // Integer types (excluding UInt64 which can overflow a long)
                     > 4 and < 12 => true,
@@ -289,23 +282,16 @@ internal sealed class DynamicXObject : DynamicObject
                     // Everything else is invalid
                     _ => null
                 }) is null)
-            {
                 return Fail(() => $"Index #{i + 1} type must be an integer or a string", out result);
-            }
 
             if (isInt == true)
             {
                 if (xNode is not XContainer container)
-                {
-                    return Fail(() => $"Index #1 out of range: only valid on XContainer", out result);
-                }
+                    return Fail(() => "Index #1 out of range: only valid on XContainer", out result);
 
                 // We have an integer, should be able to safely convert to long, as we don't allow UInt64.
                 var index = convertible.ToInt64(null);
-                if (index < 0)
-                {
-                    return Fail(() => $"Index #{i + 1} out of range: {index} is negative", out result);
-                }
+                if (index < 0) return Fail(() => $"Index #{i + 1} out of range: {index} is negative", out result);
 
                 // Skip 
                 using var enumerator = container.Nodes().GetEnumerator();
@@ -324,9 +310,7 @@ internal sealed class DynamicXObject : DynamicObject
             {
                 var index = convertible.ToString(null);
                 if (string.IsNullOrWhiteSpace(index))
-                {
                     return Fail(() => $"Index #{i + 1} out of range: null or whitespace", out result);
-                }
 
                 // We have a string, try to parse it as an XPath
                 object evaluation;
