@@ -27,7 +27,7 @@ Install-Package DevDecoder.DynamicXml
 
 ## Casting to dynamic
 
-To use include the NuGet in your solution and call the `dynamic? ToDynamic(DynamicXmlOptions?)` extension method on
+To use include the NuGet in your solution and call the `dynamic? ToDynamic(DynamicXOptions?)` extension method on
 any `XObject`, e.g.
 
 ```csharp
@@ -97,7 +97,7 @@ foreach (var order in purchaseOrders.PurchaseOrder())
     // By default, if the node is missing we get a null back.
     if (deliveryNote is not null)
     {
-        // The default ToString() method of `DynamicXObject` casts to string, so for elements, attributes,
+        // The default ToString() method of the dynamic casts to string, so for elements, attributes,
         // comments and text, it returns the inner value.
         Console.WriteLine($"  Note: {deliveryNote}");
     }
@@ -280,8 +280,8 @@ value (if available), and, if that fails, from the underlying `XObject`.
 
 # Customizing behaviour
 
-The `dynamic? ToDynamic(DynamicXmlOptions?)` extension method takes an optional `DynamicXmlOptions` object that allows
-for powerful customization of how the system works.
+The `dynamic? ToDynamic(DynamicXOptions?)` extension method takes an optional `DynamicXOptions` object that allows for
+powerful customization of how the system works.
 
 **TODO Document options with examples**
 
@@ -301,8 +301,9 @@ point of interest before casting to a dynamic. Of course, you can do this using 
 is little reason to continue using the library.
 
 The library itself does an excellent job of avoiding creating dynamic objects until it needs to and once created it
-caches them again the associated `XObject`, meaning there will be a maximum of one `DynamicXObject` per `XObject` in a
-document (note, however, that using the dynamic also creates additional objects -
+caches them again the associated `XObject`, meaning there will be a maximum of one `DynamicXObjectImpl` per `XObject` in
+a document (note, however, that using the dynamic also creates the dynamic XObject<see cref="XObject"/>additional
+objects -
 [see the notes on implementing IDynamicMetaObjectProvider ](https://docs.microsoft.com/en-us/dotnet/api/system.dynamic.idynamicmetaobjectprovider?view=net-6.0))
 .
 

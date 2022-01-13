@@ -4,12 +4,12 @@ using System.Xml.Linq;
 
 namespace DevDecoder.DynamicXml;
 
-public record class DynamicXmlOptions
+public record class DynamicXOptions
 {
     /// <summary>
     ///     The default options.
     /// </summary>
-    public static readonly DynamicXmlOptions Default = new();
+    public static readonly DynamicXOptions Default = new();
 
     /// <summary>
     ///     Controls conversion of dynamic objects.

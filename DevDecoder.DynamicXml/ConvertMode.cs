@@ -4,7 +4,7 @@ using System.Xml.Linq;
 namespace DevDecoder.DynamicXml;
 
 /// <summary>
-///     Enumeration controlling conversion of <see cref="DynamicXObject" /> to other types.
+///     Enumeration controlling conversion of dynamic <see cref="XObject" /> to other types.
 /// </summary>
 /// <remarks>
 ///     You can always convert to the associated <see cref="XObject" />, regardless of this setting.
