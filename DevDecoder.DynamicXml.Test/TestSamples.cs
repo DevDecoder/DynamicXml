@@ -20,7 +20,7 @@ public class TestSamples
     }
 
     [Fact]
-    public void Sample1()
+    public void SampleIntro()
     {
         // Load XML from embedded file.
         XDocument xDocument;
@@ -32,8 +32,6 @@ public class TestSamples
 
         // Convert to dynamic object
         var document = xDocument.ToDynamic();
-
-        Console.WriteLine((string) document);
 
         // Get root
         var purchaseOrders = document.PurchaseOrders;
@@ -91,5 +89,50 @@ public class TestSamples
 
             Console.WriteLine("");
         }
+    }
+
+    [Fact]
+    public void SampleIndexers()
+    {
+        // Get document
+        var document = TestHelpers.GetTestDocument();
+
+        // Get our purchase orders as an enumeration of dynamics
+        // Note, dynamic XObjects accept a multi-dimensional index, each dimension navigates further down the tree
+        // using the result of the previous dimension.
+        foreach (var element in document[
+                     // Select the root element.
+                     DXFilter.Root,
+                     // Then get the direct children
+                     DXFilter.Children,
+                     // Select the first child with the name 'PurchaseOrder'
+                     DXElement.WithName("PurchaseOrder", 0),
+                     DXFilter.Children,
+                     // Select the last address node
+                     DXElement.WithName("Address", ^1),
+                     // Finally get all child nodes
+                     DXFilter.Children
+                 ])
+        {
+            Console.WriteLine($"{element.Name.LocalName} = {element}");
+        }
+
+        // Get all comments
+        Console.WriteLine(string.Join(
+            Environment.NewLine,
+            document[
+                DXFilter.DescendantsAndSelf,
+                DXComment.All()
+            ]));
+
+        // Get all part numbers
+        Console.WriteLine(string.Join(
+            Environment.NewLine,
+            document[
+                DXFilter.DescendantsAndSelf,
+                DXElement.WithName("Item"),
+                DXFilter.Attributes,
+                DXAttribute.WithName("PartNumber")
+            ]));
     }
 }

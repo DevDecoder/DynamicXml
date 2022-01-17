@@ -37,6 +37,7 @@
         </Items>
     </PurchaseOrder>
     <PurchaseOrder PurchaseOrderNumber="99505" OrderDate="1999-10-22">
+        <?target Example Content?>
         <Address Type="Shipping">
             <Name>Cristian Osorio</Name>
             <Street>456 Main Street</Street>

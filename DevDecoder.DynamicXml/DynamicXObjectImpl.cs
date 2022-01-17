@@ -269,90 +269,9 @@ public static partial class DynamicXObject
                 return Fail(() => "Must supply at least one dimension", out result);
 
             // Set starting object.
-            var xObject = _xObject;
-
-            // Loop through indices
-            for (long i = 0; i < indexes.LongLength; i++)
-            {
-                if (xObject is not XNode xNode)
-                    return Fail(() => "Index #1 out of range: only valid on XNode", out result);
-
-                var iObj = indexes[i];
-                bool? isInt;
-                if (!(iObj is IConvertible convertible) ||
-                    (isInt = (int) convertible.GetTypeCode() switch
-                    {
-                        // Integer types (excluding UInt64 which can overflow a long)
-                        > 4 and < 12 => true,
-                        // String
-                        18 => false,
-                        // Everything else is invalid
-                        _ => null
-                    }) is null)
-                    return Fail(() => $"Index #{i + 1} type must be an integer or a string", out result);
-
-                if (isInt == true)
-                {
-                    if (xNode is not XContainer container)
-                        return Fail(() => "Index #1 out of range: only valid on XContainer", out result);
-
-                    // We have an integer, should be able to safely convert to long, as we don't allow UInt64.
-                    var index = convertible.ToInt64(null);
-                    if (index < 0) return Fail(() => $"Index #{i + 1} out of range: {index} is negative", out result);
-
-                    // Skip 
-                    using var enumerator = container.Nodes().GetEnumerator();
-                    var counter = index;
-                    do
-                    {
-                        counter--;
-                        if (enumerator.MoveNext()) continue;
-
-                        return Fail(() => $"Index #{i + 1} out of range: {index} > {index - counter - 1}", out result);
-                    } while (counter >= 0);
-
-                    xObject = enumerator.Current;
-                }
-                else
-                {
-                    var index = convertible.ToString(null);
-                    if (string.IsNullOrWhiteSpace(index))
-                        return Fail(() => $"Index #{i + 1} out of range: null or whitespace", out result);
-
-                    // We have a string, try to parse it as an XPath
-                    object evaluation;
-                    try
-                    {
-                        evaluation = xNode.XPathEvaluate(index);
-                    }
-                    catch (Exception exception)
-                    {
-                        return Fail(() => $"Index #{i + 1} out of range: {index} threw exception - {exception.Message}",
-                            out result);
-                    }
-
-                    switch (evaluation)
-                    {
-                        case XObject o:
-                            xObject = o;
-                            break;
-                        case IEnumerable<object> e:
-                            xObject = e.OfType<XObject>().FirstOrDefault();
-                            break;
-                        default:
-                            if (i < indexes.Length - 1)
-                                return Fail(() => $"Index #{i + 1} out of range: {index} did not return an enumeration",
-                                    out result);
-
-                            // We are at the end of the index, so we can return the value
-                            result = evaluation;
-                            return true;
-                    }
-                }
-            }
-
-            // Found object
-            result = xObject.ToDynamic();
+            result = _xObject.ToEnum()
+                .Filter(_options, indexes)
+                .Select(o => o is XObject x ? x.ToDynamic() : o);
             return true;
         }
 

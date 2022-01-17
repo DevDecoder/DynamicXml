@@ -6,4 +6,19 @@
         <RootNamespace>DevDecoder.DynamicXml</RootNamespace>
     </PropertyGroup>
 
+    <ItemGroup>
+        <None Update="DXStructs.tt">
+            <Generator>TextTemplatingFileGenerator</Generator>
+            <LastGenOutput>DXStructs.cs</LastGenOutput>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="DXStructs.cs">
+            <AutoGen>True</AutoGen>
+            <DesignTime>True</DesignTime>
+            <DependentUpon>DXStructs.tt</DependentUpon>
+        </Compile>
+    </ItemGroup>
+
 </Project>

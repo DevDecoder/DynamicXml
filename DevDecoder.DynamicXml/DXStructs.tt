@@ -1,0 +1,319 @@
+﻿<#@ template language="C#" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#
+    var types = new Dictionary
+        <string,
+            (
+                string description, string filterTarget, string filterName, string filterParamName,
+                    string filterTargetDescription,
+                    string comparerOption)>
+    {
+        ["Node"] = ("node", null, null, null, null, null),
+        ["Element"] =
+            (
+                "element", "Name.LocalName", "Name", "name", "<see cref=\"XName.LocalName\">local name</see>",
+                    "ElementComparer"),
+        ["Attribute"] =
+            (
+                "attribute", "Name.LocalName", "Name", "name", "<see cref=\"XName.LocalName\">local name</see>",
+                    "AttributeComparer"),
+        ["ProcessingInstruction"] =
+            ("processing instruction", "Target", "Target", "target",
+                "<see cref=\"XProcessingInstruction.Target\">target</see>",
+                "TargetComparer"),
+        ["Comment"] = ("comment", null, null, null, null, null),
+        ["Text"] = ("text block", null, null, null, null, null),
+        ["CData"] = ("character data block", null, null, null, null, null)
+    };
+#>
+// ReSharper disable InconsistentNaming, MemberCanBePrivate.Global
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Xml.Linq;
+
+namespace DevDecoder.DynamicXml;
+
+<#
+    foreach (var kvp in types)
+    {
+        var type = kvp.Key;
+        var (description, filterTarget,filterName, filterParamName, filterTargetDescription, comparerOption) =
+            kvp.Value;
+        var descriptionPlural = description + 's';
+        var hasFilter = !string.IsNullOrWhiteSpace(filterName) &&
+                        !string.IsNullOrWhiteSpace(filterParamName) &&
+                        !string.IsNullOrWhiteSpace(filterTargetDescription);
+#>
+/// <summary>
+///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any 
+///     <see cref="X<#= type #>"><#= descriptionPlural #></see>.
+/// </summary>
+public readonly struct DX<#= type #> : IDynamicXFilter
+{
+    /// <summary>
+    ///     The <see cref="System.Range"/> of <#= descriptionPlural #> to include.
+    /// </summary>
+    public readonly Range Range;
+
+<#
+        if (hasFilter)
+        {
+#>
+    /// <summary>
+    ///     Filters <#= descriptionPlural #> by their <#= filterTargetDescription #>.
+    /// </summary>
+    /// <remarks>
+    ///     NOTE that matching is controlled by <see cref="DynamicXOptions" />.
+    /// </remarks>
+    public readonly string? <#= filterName #>;
+
+<#
+        }
+#>
+    /// <summary>
+    ///     Selects the first <#= description #>.
+    /// </summary>
+    public static readonly DX<#= type #> First = new DX<#= type #>(0..1);
+
+    /// <summary>
+    ///     Selects the last <#= description #>.
+    /// </summary>
+    public static readonly DX<#= type #> Last = new DX<#= type #>(^1..^0);
+
+    /// <summary>
+    ///     Creates new <see cref="DX<#= type #>" />
+    /// </summary>
+    /// <param name="range">The <see cref="System.Range"/> of <#= descriptionPlural #> to include.</param>
+    public DX<#= type #>(Range range)
+    {
+<#
+        if (hasFilter)
+        {
+#>
+        <#= filterName #> = null;
+<#
+        }
+#>
+        Range = range;
+    }
+
+<#
+        if (hasFilter)
+        {
+#>
+    /// <summary>
+    ///     Creates new <see cref="DX<#= type #>" />
+    /// </summary>
+    /// <param name="<#= filterParamName #>">Filters <#= descriptionPlural #> by their <#= filterTargetDescription #>.</param>
+    public DX<#= type #>(string <#= filterParamName #>)
+    {
+        <#= filterName #> = <#= filterParamName #>;
+        Range = ..;
+    }
+
+    /// <summary>
+    ///     Creates new <see cref="DX<#= type #>" />
+    /// </summary>
+    /// <param name="<#= filterParamName #>">Filters <#= descriptionPlural #> by their <#= filterTargetDescription #>.</param>
+    /// <param name="range">The <see cref="System.Range"/> of <#= descriptionPlural #> to include.</param>
+    public DX<#= type #>(string <#= filterParamName #>, Range range)
+    {
+        <#= filterName #> = <#= filterParamName #>;
+        Range = range;
+    }
+
+<#
+        }
+#>
+    /// <summary>
+    ///     Selects all <#= descriptionPlural #>.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DX<#= type #> All()
+    {
+        return new DX<#= type #>(..);
+    }
+
+    /// <summary>
+    ///     Selects all <#= descriptionPlural #> in the <paramref name="range">specified range</paramref>.
+    /// </summary>
+    /// <param name="range"> The <see cref="System.Range"/> of <#= descriptionPlural #> to include.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DX<#= type #> Span(Range range)
+    {
+        return new DX<#= type #>(range);
+    }
+
+    /// <summary>
+    ///     Selects the <#= descriptionPlural #> at the <paramref name="index">specified index</paramref>.
+    /// </summary>
+    /// <param name="index">The <see cref="System.Index"/> of the <#= description #>. 
+    /// </param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DX<#= type #> At(Index index)
+    {
+        return new DX<#= type #>(index.ToRange());
+    }
+
+    /// <summary>
+    ///     Selects the <#= descriptionPlural #> at the <paramref name="index">specified index</paramref>.
+    /// </summary>
+    /// <param name="index">The <see cref="System.Index"/> of the <#= description #>. 
+    /// </param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DX<#= type #> At(int index)
+    {
+        var i = index < 0 ? Index.FromEnd(-index) : Index.FromStart(index);
+        return new DX<#= type #>(i.ToRange());
+    }
+
+<#
+        if (hasFilter)
+        {
+#>
+    /// <summary>
+    ///     Selects child <#= descriptionPlural #> with the <paramref name="<#= filterParamName #>">specified <#= filterParamName #></paramref>.
+    /// </summary>
+    /// <param name="<#= filterParamName #>">Filters <#= descriptionPlural #> by their <#= filterTargetDescription #></param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DX<#= type #> With<#= filterName #>(string <#= filterParamName #>)
+    {
+        return new DX<#= type #>(<#= filterParamName #>);
+    }
+
+    /// <summary>
+    ///     Selects child <#= descriptionPlural #> with the <paramref name="<#= filterParamName #>">specified <#= filterParamName #></paramref>.
+    /// </summary>
+    /// <param name="<#= filterParamName #>">Filters <#= descriptionPlural #> by their <#= filterTargetDescription #></param>
+    /// <param name="range"> The <see cref="System.Range"/> of <#= descriptionPlural #> to include.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DX<#= type #> With<#= filterName #>(string <#= filterParamName #>, Range range)
+    {
+        return new DX<#= type #>(<#= filterParamName #>, range);
+    }
+
+    /// <summary>
+    ///     Selects child <#= descriptionPlural #> with the <paramref name="<#= filterParamName #>">specified <#= filterParamName #></paramref>.
+    /// </summary>
+    /// <param name="<#= filterParamName #>">Filters <#= descriptionPlural #> by their <#= filterTargetDescription #></param>
+    /// <param name="index">The <see cref="System.Index"/> of the <#= description #>.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DX<#= type #> With<#= filterName #>(string <#= filterParamName #>, Index index)
+    {
+        return new DX<#= type #>(<#= filterParamName #>, index.ToRange());
+    }
+
+    /// <summary>
+    ///     Selects child <#= descriptionPlural #> with the <paramref name="<#= filterParamName #>">specified <#= filterParamName #></paramref>.
+    /// </summary>
+    /// <param name="<#= filterParamName #>">Filters <#= descriptionPlural #> by their <#= filterTargetDescription #></param>
+    /// <param name="index">The <see cref="System.Index"/> of the <#= description #>.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DX<#= type #> With<#= filterName #>(string <#= filterParamName #>, int index)
+    {
+        var i = index < 0 ? Index.FromEnd(-index) : Index.FromStart(index);
+        return new DX<#= type #>(<#= filterParamName #>, i.ToRange());
+    }
+
+<#
+        }
+#>
+    #region Conversions
+
+    /// <summary>
+    ///     Convert from <see cref="Index"/> to <see cref="DX<#= type #>" />.
+    /// </summary>
+    /// <param name="index">The <see cref="Index"/></param>
+    /// <returns>A <see cref="DX<#= type #>" /></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator DX<#= type #>(int index)
+    {
+        var i = index < 0 ? Index.FromEnd(-index) : Index.FromStart(index);
+        return new DX<#= type #>(i.ToRange());
+    }
+
+    /// <summary>
+    ///     Convert from <see cref="Index"/> to <see cref="DX<#= type #>" />.
+    /// </summary>
+    /// <param name="index">The <see cref="Index"/></param>
+    /// <returns>A <see cref="DX<#= type #>" /></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator DX<#= type #>(Index index)
+    {
+        return new DX<#= type #>(index.ToRange());
+    }
+
+    /// <summary>
+    ///     Convert from <see cref="Range"/> to <see cref="DX<#= type #>" />.
+    /// </summary>
+    /// <param name="range">The <see cref="Range"/></param>
+    /// <returns>A <see cref="DX<#= type #>" /></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator DX<#= type #>(Range range)
+    {
+        return new DX<#= type #>(range);
+    }
+
+<#
+        if (hasFilter)
+        {
+#>
+    /// <summary>
+    ///     Convert from <see cref="string" /> to <see cref="DX<#= type #>" />.
+    /// </summary>
+    /// <param name="<#= filterParamName #>">Filters <#= descriptionPlural #> by their <#= filterTargetDescription #></param>
+    /// <returns>A <see cref="DX<#= type #>" /></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator DX<#= type #>(string <#= filterParamName #>)
+    {
+        return new DX<#= type #>(<#= filterParamName #>);
+    }
+
+<#
+        }
+#>
+    #endregion
+
+    /// <inheritdoc />
+    public override string ToString() =>
+        $"{Range} <#= description #><#=
+            hasFilter
+                ? "{(string.IsNullOrWhiteSpace(" + filterName + ") ? string.Empty : \" ${" + filterName + "}\")}"
+                : string.Empty #>";
+    
+    /// <inheritdoc />
+    IEnumerable<object> IDynamicXFilter.Filter(IEnumerable<XObject> inputs, DynamicXOptions options) 
+    {
+        var result = inputs.OfType<X<#= type #>>();
+<#
+        if (hasFilter)
+        {
+#>
+
+        // Add filter if necessary
+        var <#= filterParamName #> = <#= filterName #>;
+        if (!string.IsNullOrWhiteSpace(<#= filterParamName #>))
+        {
+             var comparer = options.<#= comparerOption #>;
+             result = result.Where(x => comparer.Equals(x.<#= filterTarget #>, <#= filterParamName #>)); 
+        }
+<#
+        }
+#>
+        
+        // Add span if necessary
+        if (!Equals(Range, Range.All))
+        {
+            result = result.Span(Range);
+        }
+
+        return result;
+    }
+}
+
+<#
+    }
+#>

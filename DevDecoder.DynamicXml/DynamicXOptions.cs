@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace DevDecoder.DynamicXml;
@@ -83,16 +84,31 @@ public record class DynamicXOptions
     public bool ExposeEnums => EnumPrefix is not null;
 
     /// <summary>
-    ///     Optional <see cref="StringComparer" /> that determines how an element's <see cref="XName.LocalName" /> is matched
+    ///     Optional <see cref="StringComparer" /> that determines how an <see cref="XElement">element's</see>
+    ///     <see cref="XName.LocalName" /> is matched
     ///     with the requested dynamic member name.
     /// </summary>
     public StringComparer ElementComparer { get; init; } = StringComparer.Ordinal;
 
     /// <summary>
-    ///     Optional <see cref="StringComparer" /> that determines how an attribute's <see cref="XName.LocalName" /> is matched
+    ///     Optional <see cref="StringComparer" /> that determines how an <see cref="XAttribute">attribute's</see>
+    ///     <see cref="XName.LocalName" /> is matched
     ///     with the requested dynamic member name.
     /// </summary>
     public StringComparer AttributeComparer { get; init; } = StringComparer.Ordinal;
+
+    /// <summary>
+    ///     Optional <see cref="StringComparer" /> that determines how an attribute's
+    ///     <see cref="XProcessingInstruction">processing instruction's</see> <see cref="XProcessingInstruction.Target" /> is
+    ///     matched
+    ///     with the requested dynamic member name.
+    /// </summary>
+    public StringComparer TargetComparer { get; init; } = StringComparer.Ordinal;
+
+    /// <summary>
+    ///     Optional <see cref="IXmlNamespaceResolver"/> used during the evaluation of XPaths.
+    /// </summary>
+    public IXmlNamespaceResolver? NamespaceResolver { get; init; }
 
     /// <summary>
     ///     Optional function that allows the mapping of a requested dynamic member name into the equivalent
