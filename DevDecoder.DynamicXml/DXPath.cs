@@ -124,10 +124,12 @@ public class DXPath : IDynamicXFilter
         // We build our filter based on the expression's return type.
         var result = expression.ReturnType switch
         {
-            XPathResultType.NodeSet => nodes.SelectMany(n => n.CreateNavigator().Select(expression).Cast<object>()),
+            XPathResultType.NodeSet => nodes.SelectMany(n =>
+                n.CreateNavigator().Select(expression).OfType<XPathNavigator>().Select(n => n.UnderlyingObject)
+                    .Cast<object>()),
             XPathResultType.Any => nodes.SelectMany(n => n.CreateNavigator().Evaluate(expression) switch
             {
-                XPathNodeIterator i => i.Cast<object>(),
+                XPathNodeIterator i => i.OfType<XPathNavigator>().Select(n => n.UnderlyingObject).Cast<object>(),
                 { } o => o.ToEnum()
             }),
             XPathResultType.Number or XPathResultType.String or XPathResultType.Boolean => nodes.Select(n =>

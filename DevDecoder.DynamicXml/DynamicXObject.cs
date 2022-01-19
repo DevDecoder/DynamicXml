@@ -47,6 +47,18 @@ public static partial class DynamicXObject
         => Filter(input.ToEnumerable(), null, indices);
 
     /// <summary>
+    /// Filters the <paramref name="input"/> <see cref="XObject"/>.
+    /// </summary>
+    /// <param name="input">The <see cref="XObject"/>.</param>
+    /// <param name="options">The <see cref="DynamicXOptions">options</see>, if any; otherwise <see langword="null"/>.</param>
+    /// <param name="filters">The indices.</param>
+    /// <returns>An enumeration of results, which may contain <see cref="XObject">XObjects</see>, and/or
+    /// <see cref="string">strings</see>, <see cref="double">doubles</see> or <see cref="bool">booleans</see>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IEnumerable<object> Filter(this XObject input, DynamicXOptions? options, params object[] filters)
+        => Filter(input.ToEnumerable(), options, filters);
+
+    /// <summary>
     /// Filters the <paramref name="inputs">input</paramref> <see cref="XObject">XObjects</see>.
     /// </summary>
     /// <param name="inputs">The <see cref="XObject">XObjects</see>.</param>
@@ -58,41 +70,28 @@ public static partial class DynamicXObject
         => Filter(inputs, null, indices);
 
     /// <summary>
-    /// Filters the <paramref name="input"/> <see cref="XObject"/>.
-    /// </summary>
-    /// <param name="input">The <see cref="XObject"/>.</param>
-    /// <param name="options">The <see cref="DynamicXOptions">options</see>, if any; otherwise <see langword="null"/>.</param>
-    /// <param name="indices">The indices.</param>
-    /// <returns>An enumeration of results, which may contain <see cref="XObject">XObjects</see>, and/or
-    /// <see cref="string">strings</see>, <see cref="double">doubles</see> or <see cref="bool">booleans</see>.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static IEnumerable<object> Filter(this XObject input, DynamicXOptions? options, params object[] indices)
-        => Filter(input.ToEnumerable(), options, indices);
-
-    /// <summary>
     /// Filters the <paramref name="inputs">input</paramref> <see cref="XObject">XObjects</see>.
     /// </summary>
     /// <param name="inputs">The <see cref="XObject">XObjects</see>.</param>
     /// <param name="options">The <see cref="DynamicXOptions">options</see>, if any; otherwise <see langword="null"/>.</param>
-    /// <param name="indices">The indices.</param>
+    /// <param name="filters">The filters.</param>
     /// <returns>An enumeration of results, which may contain <see cref="XObject">XObjects</see>, and/or
     /// <see cref="string">strings</see>, <see cref="double">doubles</see> or <see cref="bool">booleans</see>.</returns>
     public static IEnumerable<object> Filter(this IEnumerable<XObject> inputs, DynamicXOptions? options,
-        params object[] indices)
+        params object[] filters)
     {
         options ??= DynamicXOptions.Default;
         // ReSharper disable PossibleMultipleEnumeration
         IEnumerable<object> lastResult = inputs;
 
         var stack = new Stack<IEnumerator>();
-        stack.Push(indices.GetEnumerator());
+        stack.Push(filters.GetEnumerator());
 
-        foreach (var filter in indices.Flatten(options.IndexResultIfNotFound == IndexResultIfNotFound.Throw))
+        foreach (var filter in filters.Flatten(options.IndexResultIfNotFound == IndexResultIfNotFound.Throw))
         {
-            if (!inputs.Any()) break;
             lastResult = filter.Filter(inputs, options);
-            inputs = lastResult
-                .OfType<XObject>(); // If we go again, we only want to use XObjects as input to next filter.
+            // If we go again, we only want to use XObjects as input to next filter.
+            inputs = lastResult.OfType<XObject>();
         }
 
         return lastResult;
@@ -132,6 +131,15 @@ public static partial class DynamicXObject
                         yield return filter;
                         continue;
 
+                    case Index index:
+                        yield return DXFilter.Children;
+                        yield return DXObject.At(index);
+                        break;
+
+                    case Range range:
+                        yield return DXObject.Span(range);
+                        break;
+
                     /*
                      * Special case strings
                      */
@@ -146,7 +154,6 @@ public static partial class DynamicXObject
                             name = null;
                         }
 
-                        yield return DXFilter.Children;
                         yield return name is null ? DXPath.WithPath(str) : DXObject.WithName(name);
                         continue;
 

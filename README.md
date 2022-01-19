@@ -3,7 +3,8 @@
 
 # DynamicXml
 
-Convenience extension method that converts any `XObject` into a `dynamic` for easy access.
+Convenience extension method that converts any `XObject` into a `dynamic` for easy access, combined with a powerful XML
+filter.
 
 # Installation
 
@@ -43,9 +44,8 @@ var document = xDocument.ToDynamic();
 
 ## Example
 
-This XML sample is taken from
-[Microsoft](https://docs.microsoft.com/en-us/dotnet/standard/linq/sample-xml-file-multiple-purchase-orders), but is
-truncated for readability:
+This XML sample can be seen in full [here](DevDecoder.DynamicXml.Test/Test.xml), but is truncated for readability,
+further you can see the sample code [here](DevDecoder.DynamicXml.Test/TestSamples.cs):
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -75,7 +75,7 @@ truncated for readability:
 </PurchaseOrders>
 ```
 
-The following example shows how to quickly navigate the [above XML](#example) (using the `document`
+The following example shows how to conveniently navigate the [above XML](#example) (using the `document`
 created [above](#casting-to-dynamic)):
 
 ```csharp
@@ -96,11 +96,9 @@ foreach (var order in purchaseOrders.PurchaseOrder())
 
     // By default, if the node is missing we get a null back.
     if (deliveryNote is not null)
-    {
-        // The default ToString() method of the dynamic casts to string, so for elements, attributes,
+        // The default ToString() method of `DynamicXObject` casts to string, so for elements, attributes,
         // comments and text, it returns the inner value.
         Console.WriteLine($"  Note: {deliveryNote}");
-    }
 
     // We can also enumerate over Address nodes
     foreach (var address in order.Address())
@@ -123,27 +121,26 @@ foreach (var order in purchaseOrders.PurchaseOrder())
     {
         // Cast to array to prevent multiple enumeration, for performance, our dynamics dynamically enumerate.
         var itemsArr = items.ToArray();
-        
+
         // Write out order summary
         Console.WriteLine(
             $"  {itemsArr.Length} item{(itemsArr.Length == 1 ? "" : "s")}" +
             // Note the `double` cast below will error if `USPrice` isn't a valid double.
             // A safer method would be to use a TryParse instead.
-            $" Total: ${itemsArr.Aggregate(0D, (total, item) => total + (double)item.USPrice):F2}");
-        
+            $" Total: ${itemsArr.Aggregate(0D, (total, item) => total + (double) item.USPrice):F2}");
+
         // Iterate over each `Item` node
-        foreach (var item in items)
-        {
-            Console.WriteLine($"    {item.PartNumber} @ ${item.USPrice}");
-        }
+        foreach (var item in items) Console.WriteLine($"    {item.PartNumber} @ ${item.USPrice}");
     }
+
     Console.WriteLine("");
 }
 ```
 
 # Dynamic members
 
-The dynamic object exposes the following members (note they are not available until runtime):
+The dynamic object exposes the following members (note they are not available until runtime, so do not appear in
+intelli-sense, etc.):
 
 ## Properties
 
@@ -173,7 +170,10 @@ first time it finds any):
 
 And finally, (even when arguments are supplied):
 
-3. Any method on `XObject` that matches the requested signature.
+3. Whether the name maps to 'Filter', in which case it calls the extension
+   method `DynamicXObject.Filter(this XObject, DynamicXOptions, params object[])`, and performs a filter operation with
+   the supplied filters (if any).
+4. Any method on `XObject` that matches the requested signature.
 
 If it doesn't find any of the above, then the result depends on the `InvokeResultIfNotFound` option.
 
@@ -182,27 +182,26 @@ If it doesn't find any of the above, then the result depends on the `InvokeResul
 Easily the most powerful feature is the indexer system, that allows for complex, and efficient, navigation of the
 document.
 
-The dynamic accepts a multidimensional indexer, where each index can be either an integer (any integer type
-except `UInt64` is allowed), or an [XPath string](https://www.w3schools.com/xml/xpath_syntax.asp).
+The dynamic accepts a multidimensional indexer, where each index can be either an integer (an `int` or smaller),
+a `System.Index`, a `Range`, an [XPath expression](https://www.w3schools.com/xml/xpath_syntax.asp) as a `string`.
 
-The Integer index will return for the n'th child _element_ of the current `XNode` (i.e. `XElement` or `XDocument`), as
-you specify extra dimensions, it will continue down the tree. For example `purchaseOrders[0]` returns the
+The Integer index will return for the n'th child _object_ of the current object (i.e. `XElement` or `XDocument`), as you
+specify extra dimensions, it will continue down the tree. For example `purchaseOrders[0]` returns the
 first `PurchaseOrder` element, whilst `purchaseOrders[1,1]` returns the second `Address` element of the
-second `PurchaseOrder` element.
+second `PurchaseOrder` element. You can use a -ve index to index from the end, e.g. `-1` will get the last child.
 
-You can also supply an [XPath](https://developer.mozilla.org/en-US/docs/Web/XPath) which allows for extremely powerful
-searching.
+However, you can also use `System.Index` syntax which is prefered, in which case `^1` will return the last child object.
+
+Supplying an [XPath](https://developer.mozilla.org/en-US/docs/Web/XPath) which allows for extremely powerful searching.
 
 * If the XPath leads to a `bool` (e.g. by using
   the [`boolean()` function](https://developer.mozilla.org/en-US/docs/Web/XPath/Functions/boolean)), `double` or
-  a `string` then it must be the final index as the result is the type and not another dynamic.
+  a `string` then it must be the final index as the result is the type and not another `XObject`.
 * If the XPath refers to one or more `XObject`s, then the first one is returned as dynamic. For more detail, refer to
   the [documentation for `XPathEvaulate`](https://docs.microsoft.com/en-us/dotnet/api/system.xml.xpath.extensions.xpathevaluate?view=net-6.0)
   .
 * If the XPath refers to an `XContainer` (i.e. an `XDocument` or `XElement`), then further index dimensions can be used
   to continue navigation.
-* Using XPath indices allows us to access other `XObject` types, like comments (`XComment`) and text (`XText`) which are
-  also returned as dynamic objects.
 
 As explained, you can easily mix both indexer types in a single lookup:
 

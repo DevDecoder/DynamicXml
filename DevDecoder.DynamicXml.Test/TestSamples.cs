@@ -94,13 +94,67 @@ public class TestSamples
     [Fact]
     public void SampleIndexers()
     {
-        // Get document
-        var document = TestHelpers.GetTestDocument();
+        // Get XML document
+        var xDoc = TestHelpers.GetXml();
 
-        // Get our purchase orders as an enumeration of dynamics
-        // Note, dynamic XObjects accept a multi-dimensional index, each dimension navigates further down the tree
-        // using the result of the previous dimension.
-        foreach (var element in document[
+        // Get dynamic document
+        var document = xDoc.ToDynamic();
+
+        // We can use our multi-dimensional index to select nodes, here we select the first node of the document
+        // (i.e. the Root - 'PurchaseOrders'), then its first child node, which is an XComment.
+        // Result: ' A comment '
+        Console.WriteLine(document[0, 0].ToString());
+
+        // We can also use System.Index, e.g. this gets the root, then the last child 3 times, which gives us the last
+        // Item, it then writes out the PartNumber (898-AM)
+        Console.WriteLine(document[0, ^1, ^1, ^1].PartNumber.ToString());
+
+        // In fact, we can specify any filters as indexers, at this point we get an insight into what is really going on
+        // The indexer actually uses the Filter method under the hood, and returns the first item if any, otherwise
+        // 'null' (or it can throw an OutOfRangeException if Options.IndexResultIfNotFound is set to Throw).
+        //
+        // However, the narrowing down to a single result only occurs as the last step, so we here we select all descendant
+        // nodes of the document, and then find the last comment. ('A comment')
+        Console.WriteLine(document[DXFilter.Descendants, DXComment.At(^1)].ToString());
+
+        // Here's another example which finds elements called `Item`, with an `Attribute` called `PartNumber`, and selects
+        // the second one it sees ('926-AA')
+        Console.WriteLine(string.Join(
+            Environment.NewLine,
+            document[
+                DXFilter.DescendantsAndSelf,
+                DXElement.WithName("Item"),
+                DXFilter.Attributes,
+                DXAttribute.WithName("PartNumber", 1)
+            ]));
+
+        // When we pass an integer or Index as filter, it is first converted to a call to get any children, and then a
+        // call to get the object at the specified index, so the above call to
+        // Console.WriteLine(document[0,0].ToString());
+        // is actually equivalent to-
+        Console.WriteLine(document[DXFilter.Children, DXObject.At(0), DXFilter.Children, DXObject.At(0)].ToString());
+    }
+
+    [Fact]
+    public void SampleFilter()
+    {
+        // Get XML document
+        var xDoc = TestHelpers.GetXml();
+        // Get dynamic document
+        var document = xDoc.ToDynamic();
+
+        // We can use the "Filter" with our dynamic XObjects
+        // NOTE, unlike indexer, we always return an enumeration, that can contain one or more results,
+        // or be empty.
+        Assert.Equal(
+            xDoc.Root!.Nodes().Skip(1).Take(1),
+            // The `1` is equivalent to DXFilter.Children, DXObject.At(1)
+            document.Filter(DXFilter.Root, 1));
+
+        // Using the filter method with a dynamic is somewhat inefficient, as we can use it on an XObject directly
+        // So here we cast our dynamic directly to the XObject before calling filter.  In this case we 
+        // get our result as an enumeration of objects, which we can cast directly to XElements
+        foreach (XElement element in ((XDocument) document).Filter(
                      // Select the root element.
                      DXFilter.Root,
                      // Then get the direct children
@@ -112,27 +166,9 @@ public class TestSamples
                      DXElement.WithName("Address", ^1),
                      // Finally get all child nodes
                      DXFilter.Children
-                 ])
+                 ))
         {
-            Console.WriteLine($"{element.Name.LocalName} = {element}");
+            Console.WriteLine($"{element.Name.LocalName} = {element.Value}");
         }
-
-        // Get all comments
-        Console.WriteLine(string.Join(
-            Environment.NewLine,
-            document[
-                DXFilter.DescendantsAndSelf,
-                DXComment.All()
-            ]));
-
-        // Get all part numbers
-        Console.WriteLine(string.Join(
-            Environment.NewLine,
-            document[
-                DXFilter.DescendantsAndSelf,
-                DXElement.WithName("Item"),
-                DXFilter.Attributes,
-                DXAttribute.WithName("PartNumber")
-            ]));
     }
 }

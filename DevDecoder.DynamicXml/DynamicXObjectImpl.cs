@@ -132,6 +132,16 @@ public static partial class DynamicXObject
             return true;
         }
 
+        /// <summary>
+        /// The method info for the `Filter` method.
+        /// </summary>
+        private static readonly MethodInfo FilterMethod = typeof(DynamicXObject)
+            .GetMethod("Filter",
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly,
+                null,
+                new[] {typeof(XObject), typeof(DynamicXOptions), typeof(object[])},
+                null)!;
+
         /// <inheritdoc />
         public override bool TryInvokeMember(InvokeMemberBinder binder, object?[]? args, out object? result)
         {
@@ -166,7 +176,16 @@ public static partial class DynamicXObject
             }
 
             var builtInName = _options.GetBuiltInName(binder.Name);
+
+            if (string.Equals(builtInName, "Filter"))
+            {
+                // Invoke static Filter method.
+                result = FilterMethod.Invoke(null, new object[] {_xObject, _options, args ?? Array.Empty<object>()});
+                return true;
+            }
+
             if (builtInName is not null)
+            {
                 try
                 {
                     result = _xObject.GetType().InvokeMember(
@@ -181,6 +200,7 @@ public static partial class DynamicXObject
                 {
                     // ignored
                 }
+            }
 
             switch (_options.InvokeResultIfNotFound)
             {
@@ -269,10 +289,21 @@ public static partial class DynamicXObject
                 return Fail(() => "Must supply at least one dimension", out result);
 
             // Set starting object.
-            result = _xObject.ToEnum()
+            result = _xObject
                 .Filter(_options, indexes)
-                .Select(o => o is XObject x ? x.ToDynamic() : o);
-            return true;
+                .FirstOrDefault();
+            // ReSharper restore PossibleMultipleEnumeration
+
+            switch (result)
+            {
+                case XObject xObject:
+                    result = xObject.ToDynamic();
+                    return true;
+                case null:
+                    return Fail(() => "No result found", out result);
+                default:
+                    return true;
+            }
         }
 
         /// <inheritdoc />
