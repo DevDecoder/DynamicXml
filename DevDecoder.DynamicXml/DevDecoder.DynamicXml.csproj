@@ -9,7 +9,7 @@
         <Company>DevDecoder</Company>
         <PackageDescription>Cross-platform .NET Standard library for easy manipulation of XML</PackageDescription>
         <RepositoryUrl>https://github.com/DevDecoder/DynamicXml</RepositoryUrl>
-        <PackageDescription>Cross-platform .NET Standard library for easy manipulation of XML</PackageDescription>
+        <Description>Cross-platform .NET Standard library for easy manipulation of XML</Description>
         <Copyright>2021-2022 Craig Dean</Copyright>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/DevDecoder/DynamicXml</PackageProjectUrl>
