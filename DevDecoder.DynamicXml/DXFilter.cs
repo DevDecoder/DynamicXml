@@ -93,6 +93,16 @@ public readonly struct DXFilter : IDynamicXFilter
         (inputs, _) => inputs.OfType<XContainer>().SelectMany(c => c.Nodes()));
 
     /// <summary>
+    ///     Selects all attribute (if an `XElement`) and child nodes.
+    /// </summary>
+    public static readonly DXFilter AttributesAndChildren = new(nameof(Children),
+        (inputs, _) => inputs.OfType<XContainer>().SelectMany(c => c switch
+        {
+            XElement xElement => xElement.Attributes().Cast<XObject>().Union(xElement.Nodes()),
+            _ => c.Nodes()
+        }));
+
+    /// <summary>
     ///     Selects all descendants.
     /// </summary>
     public static readonly DXFilter Descendants = new(nameof(Descendants),
@@ -144,7 +154,7 @@ public readonly struct DXFilter : IDynamicXFilter
         (inputs, _) => inputs.SelectMany(o => o.Parent.ToEnum()));
 
     /// <summary>
-    /// A friendly name for the filter.
+    ///     A friendly name for the filter.
     /// </summary>
     public readonly string Name;
 
@@ -171,5 +181,8 @@ public readonly struct DXFilter : IDynamicXFilter
         return _filter(inputs, options);
     }
 
-    public override string ToString() => $"{Name} filter";
+    public override string ToString()
+    {
+        return $"{Name} filter";
+    }
 }

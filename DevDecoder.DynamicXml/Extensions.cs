@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace DevDecoder.DynamicXml;
@@ -41,7 +39,7 @@ public static class Extensions
     /// </remarks>
     public static Range ToRange(this Index index)
     {
-        return new(index, index.Next());
+        return new Range(index, index.Next());
     }
 
     /// <summary>
@@ -54,6 +52,12 @@ public static class Extensions
     /// <remarks>
     ///     <para>
     ///         Attempts to efficiently apply a <see cref="Range" /> to any enumeration, not just
+    ///     </para>
+    ///     <para>
+    ///         Supports reverse ranges, i.e. where the <see cref="Range.Start" /> is greater than <see cref="Range.End" />.
+    ///         However, in such an instance,
+    ///         the  <see cref="Range.Start" /> is exclusive and the  <see cref="Range.End" /> is inclusive, so that `^0..0`
+    ///         indicates the full, reverse range; and `2..0` will return item 1, followed by item 0.
     ///     </para>
     /// </remarks>
     public static IEnumerable<T> Span<T>(this IEnumerable<T> source, Range range)
@@ -101,9 +105,9 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Converts a single, nullable <paramref name="input"/> to an enumeration.
+    ///     Converts a single, nullable <paramref name="input" /> to an enumeration.
     /// </summary>
-    /// <param name="input">The input object, if any; otherwise <see langword="null"/>.</param>
+    /// <param name="input">The input object, if any; otherwise <see langword="null" />.</param>
     /// <returns>An enumeration of zero or one objects.</returns>
     internal static IEnumerable<T> ToEnum<T>(this T? input)
     {

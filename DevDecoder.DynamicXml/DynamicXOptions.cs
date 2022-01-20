@@ -106,7 +106,7 @@ public record class DynamicXOptions
     public StringComparer TargetComparer { get; init; } = StringComparer.Ordinal;
 
     /// <summary>
-    ///     Optional <see cref="IXmlNamespaceResolver"/> used during the evaluation of XPaths.
+    ///     Optional <see cref="IXmlNamespaceResolver" /> used during the evaluation of XPaths.
     /// </summary>
     public IXmlNamespaceResolver? NamespaceResolver { get; init; }
 

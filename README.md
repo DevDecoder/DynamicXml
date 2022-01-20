@@ -3,6 +3,8 @@
 
 # DynamicXml
 
+**NOTE: This package is currently in development and testing but will be deployed soon.**
+
 Convenience extension method that converts any `XObject` into a `dynamic` for easy access, combined with a powerful XML
 filter.
 
@@ -75,7 +77,7 @@ further you can see the sample code [here](DevDecoder.DynamicXml.Test/TestSample
 </PurchaseOrders>
 ```
 
-The following example shows how to conveniently navigate the [above XML](#example) (using the `document`
+The following sample shows how to conveniently navigate the [above XML](#example) (using the `document`
 created [above](#casting-to-dynamic)):
 
 ```csharp
@@ -144,17 +146,19 @@ intelli-sense, etc.):
 
 ## Properties
 
-When you request a property from the dynamic it looks for the following (in order):
+When you request a property, e.g. `address.Name` from the dynamic `address` it looks for `Name` in the following order:
 
 1. The first **Attribute** with
    a [local name](https://docs.microsoft.com/en-us/dotnet/api/system.xml.linq.xname.localname?view=net-6.0) that
-   matches.
+   matches, in which case the result is a dynamic `XAttribute`.
 2. The first child **Element** with
    a [local name](https://docs.microsoft.com/en-us/dotnet/api/system.xml.linq.xname.localname?view=net-6.0) that
-   matches.
-3. Any field/property on the `XObject` that matches.
+   matches, in which case the result is a dynamic `XElement`.
+3. Any field/property on the underlying `XObject` that matches, in which case the result is the same type as that
+   property.
 
-If it doesn't find any of the above, then the result depends on the `PropertyResultIfNotFound` option.
+If it doesn't find any of the above, then the result depends on the `PropertyResultIfNotFound` option, but, by default
+is `null`. This means that searching for a missing attribute/element doesn't throw an exception by default.
 
 ## Methods
 
@@ -163,86 +167,23 @@ first time it finds any):
 
 1. All **Attributes** with
    a [local name](https://docs.microsoft.com/en-us/dotnet/api/system.xml.linq.xname.localname?view=net-6.0) that match;
-   if any.
+   if any, in which case the result is an enumeration of dynamic `XAttribute`s.
 2. All **Elements** with
    a [local name](https://docs.microsoft.com/en-us/dotnet/api/system.xml.linq.xname.localname?view=net-6.0) that match;
-   if any.
+   if any, in which case the result is an enumeration of dynamic `XElement`s.
 
 And finally, (even when arguments are supplied):
 
 3. Whether the name maps to 'Filter', in which case it calls the extension
    method `DynamicXObject.Filter(this XObject, DynamicXOptions, params object[])`, and performs a filter operation with
-   the supplied filters (if any).
-4. Any method on `XObject` that matches the requested signature.
+   the supplied filters (if any); the result is the an enumeration, where any `XObject`s are converted to their dynamic
+   form ([see below](#filter-method)).
+4. Any method on `XObject` that matches the requested signature, in which case the result is the same type as the return
+   type of that method.
 
-If it doesn't find any of the above, then the result depends on the `InvokeResultIfNotFound` option.
-
-## Indexer
-
-Easily the most powerful feature is the indexer system, that allows for complex, and efficient, navigation of the
-document.
-
-The dynamic accepts a multidimensional indexer, where each index can be either an integer (an `int` or smaller),
-a `System.Index`, a `Range`, an [XPath expression](https://www.w3schools.com/xml/xpath_syntax.asp) as a `string`.
-
-The Integer index will return for the n'th child _object_ of the current object (i.e. `XElement` or `XDocument`), as you
-specify extra dimensions, it will continue down the tree. For example `purchaseOrders[0]` returns the
-first `PurchaseOrder` element, whilst `purchaseOrders[1,1]` returns the second `Address` element of the
-second `PurchaseOrder` element. You can use a -ve index to index from the end, e.g. `-1` will get the last child.
-
-However, you can also use `System.Index` syntax which is prefered, in which case `^1` will return the last child object.
-
-Supplying an [XPath](https://developer.mozilla.org/en-US/docs/Web/XPath) which allows for extremely powerful searching.
-
-* If the XPath leads to a `bool` (e.g. by using
-  the [`boolean()` function](https://developer.mozilla.org/en-US/docs/Web/XPath/Functions/boolean)), `double` or
-  a `string` then it must be the final index as the result is the type and not another `XObject`.
-* If the XPath refers to one or more `XObject`s, then the first one is returned as dynamic. For more detail, refer to
-  the [documentation for `XPathEvaulate`](https://docs.microsoft.com/en-us/dotnet/api/system.xml.xpath.extensions.xpathevaluate?view=net-6.0)
-  .
-* If the XPath refers to an `XContainer` (i.e. an `XDocument` or `XElement`), then further index dimensions can be used
-  to continue navigation.
-
-As explained, you can easily mix both indexer types in a single lookup:
-
-```csharp
-// The select the first `PurchaseOrder` element, then the 3 child (`Items`), and then the second `Item` element
-// Finally it executes the `text()[2]` XPath to return the second text node, which we cast to an `XText` (from the
-// dynanic result).
-XText text = purchaseOrders[0,3,1,"text()[2]"];
-```
-
-Note a subtlety with the way XPaths are interpreted, the above is *NOT* equivalent to:
-
-```csharp
-// The following results in `null` (or throws an IndexOutOfRangeException if the `IndexResultIfNotFound` is set to `Throw`
-var text = purchaseOrders[0,3,1,"text()",2];
-```
-
-The reason as that the `text()` XPath returns an enumeration of `XText` nodes, _of which the first is selected_. Indeed,
-if you did not specify the final index the result would be the first `XText` node, so the following are equivalent:
-
-```csharp
-XText text = purchaseOrders[0,3,1,"text()[1]"];
-
-// The following is equivalent as we pick the first XObject returned from the XPath.
-XText equivalent = purchaseOrders[0,3,1,"text()"];
-```
-
-As `XText` nodes do not descend from `XContainer` they do not have children, therefore the `2` index is effectively out
-of range. For this reason, if you wish to work with an element other than the first returned by an XPath, you must
-specify the index in the XPath itself, rather than in a subsequent index - e.g. the following is valid:
-
-```csharp
-// This gets the 3rd child node (1-indexed) from the second purchase order (0-indexed). 
-var node = purchaseOrders["/PurchaseOrders/PurchaseOrder[2]", 2];
-```
-
-_This highlights another common gotcha, annoyingly XPath's are 1-indexed, unlike the C# language which is 0-indexed._
-
-If the indexer doesn't find a child element at the specified position, then the result depends on
-the `IndexResultIfNotFound`
-option; by default it returns a `null`, but you can change the behaviour to throw an `IndexOutOfRangeException` instead.
+If it doesn't find any of the above, then the result depends on the `InvokeResultIfNotFound` option, but, by default is
+an empty enumeration. This means that searching for a collection of attributes or elements that is missing doesn't throw
+an exception by default, but returns an empty enumeration, which is more usable.
 
 ## ToString
 
@@ -277,10 +218,323 @@ Similarly, we can also cast to a `string`, which is the same as calling `ToStrin
 Unless the `ConvertMode` option is set to `ConvertMode.AsString`, you can also attempt any valid conversion from the
 value (if available), and, if that fails, from the underlying `XObject`.
 
+## Indexer
+
+Easily the most powerful feature is the indexer system, that allows for complex, and efficient, navigation of the
+document.
+
+The dynamic accepts a multidimensional indexer, where each index can be either any of the following:
+
+### Integer indices
+
+An integer (`int`, `short`, `ushort`, `sbyte`, `byte`) index `i` will return the `i`th child `XNode` of the current
+object as a dynamic. Only `XContainer` objects (i.e. `XElement` or `XDocument`) have children, also we can't use this to
+find an attribute as that isn't an `XNode`, (to do that we can use a string, or the `DXAttribute` filter, which we cover
+below). For example:
+
+```csharp
+// We can use our multi-dimensional index to select nodes, here we select the first node of the document
+// (i.e. the Root - 'PurchaseOrders'), then its first child node, which is an XComment.
+// Result: ' A comment '
+Console.WriteLine(document[0, 0].ToString());
+```
+
+If the index is negative, then it will count from the end, e.g. and index of `-1` will get the last child, however,
+since C#8 it has been possible to use...
+
+### Index indices
+
+A `System.Index` can be used instead of an integer, indeed, integers are converted to `System.Index` under the hood, so
+this is the native accepted by indexers, for example:
+
+```csharp
+// We can also use System.Index, e.g. this gets the root, then the last child 3 times, which gives us the last
+// Item, it then writes out the PartNumber (898-AM)
+Console.WriteLine(document[0, ^1, ^1, ^1].PartNumber.ToString());
+```
+
+### String indices
+
+A `string` can be supplied, and
+
+* if it is a valid XML local name (see
+  the [`XmlConvert.VerifyNCName` documentation](https://docs.microsoft.com/en-us/dotnet/api/system.xml.xmlconvert.verifyncname?view=net-6.0))
+  it will match any attributes with the name and any child nodes with the name (if an `XELement`) or target (if
+  an `XProcessingInstruction`), e.g.
+
+```csharp
+// We can get access nodes and attributes by string, when we supply a string, it first searches attributes on
+// the current node, then children for a matching element (or processing instruction).  Note, this filter actually
+// returns mutliple resuls (one for each `PurchaseOrder` with a `PurchaseOrderNumer` attribute), but as we're using an
+// indexer, only the first is returned.
+// Result: `99503`
+Console.WriteLine(document["PurchaseOrders", "PurchaseOrder", "PurchaseOrderNumber"].ToString());
+```
+
+* otherwise it will evaluate the string as an [XPath expression](https://developer.mozilla.org/en-US/docs/Web/XPath)
+  from the current node, for example, the equivalent XPath would be:
+
+```csharp
+// The equivalent XPath
+// Result: `99503`
+Console.WriteLine(document["/PurchaseOrders/PurchaseOrder/@PurchaseOrderNumber"].ToString());
+```
+
+**Note** we could write the XPath as
+
+```xpath
+string(/PurchaseOrders/PurchaseOrder[1]/@PurchaseOrderNumber)
+```
+
+_The above highlights a common gotcha - annoyingly XPath's are 1-indexed, unlike the C# language which is 0-indexed,
+hence [1] returns the first purchase order._
+
+However, this isn't actually _equivalent_ (though it is more specific). Firstly it returns a string and not the
+actual `XAttribute`, whereas the two indexers shown both return a dynamic `XAttribute`; secondly, and more subtly, the
+original indices actually specify all such attributes, however, the indexers only return the first one. Due to lazy
+evaluation this isn't as problematic as you may fear.
+
+This also demonstrates that the potential result of an [XPath](https://developer.mozilla.org/en-US/docs/Web/XPath) is
+broader than just a dynamic `XObject`:
+
+* If the XPath leads to a `bool` (e.g. by using
+  the [`boolean()` function](https://developer.mozilla.org/en-US/docs/Web/XPath/Functions/boolean)), `double` or
+  a `string` then it must be the final index as the result is not an `XContainer` (document or element), so no further
+  filtering will be possible.
+* If the XPath refers to one or more `XObject`s, then an enumeration of `XObjects`s is returned to the next step.
+* If the XPath refers to an `XContainer` (i.e. an `XDocument` or `XElement`), then further index dimensions can be used
+  to continue navigation.
+
+### Range indices
+
+As we've begun to explain, the initial result of an indexing step is an enumeration of matches. Usually, this
+enumeration will contain zero or one elements, but it doesn't have to. The next indexing step will be applied to all the
+previous results, filtering them further. Only when the indexer returns will the first element be selected. As we will
+soon see, we can avoid this final step by using the `Filter` functionality directly.
+
+However, that does mean that it is entirely valid to pass a `System.Range`, (e.g. `1..3`, `3..1`, `0..^0`, `..`, etc.),
+this may seem useless, but, due to above behaviour, ranges can still be valuable when they are not used as the last
+index:
+
+```csharp
+// Here we use the `..` range (i.e. all) to explicitly say we're searching for any child node of the root
+// element that contains an attribute, element or processing instruction with the specified name/target.
+// Result: `99503`
+Console.WriteLine(document[0, .., "PurchaseOrderNumber"].ToString());
+```
+
+As with `System.Index`, passing a range directly will only filter child nodes (i.e. not attributes), however, we can use
+filters to filter attributes with ranges.
+
+### Enumerable indices
+
+The index can also be an enumeration, if the indexer doesn't recognise the supplied index type, then it finally checks
+to see if has been given an enumeration, in which case it yields the contents. This is done 'recursively' in a process
+called
+'flattening', so there is no depth limit (it doesn't use the runtime stack to recurse). One use of this functionality is
+to allow an pre-defined array to be passed directly, e.g.:
+
+```csharp
+// Our indexers will 'flatten' any enumeration (recursively), which is useful as it allows us to create complex
+// reusable indices, which can be passed to multiple calls
+// Result: `99503`
+var allPurchaseOrders = new object[] {0, "PurchaseOrder"};
+Console.WriteLine(document[allPurchaseOrders, "PurchaseOrderNumber"].ToString());
+```
+
+### Filter indices
+
+In reality, all indices are converted to one (or more) filters and applied to the result of the previous filter
+operation. A filter is any implementation of `IDynamicXFilter`, and is covered in more detail below. Most of the above
+indices are converted to two filters:
+
+* Integer or `System.Index` indices are converted to `DXFilter.Children` followed by `DXObject.At()`, e.g.
+  `[^1]` ≡ `[DXFilter.Children, DXObject.At(^1)]`.
+
+```csharp
+// When we pass an integer or Index as filter, it is first converted to a call to get any children, and then a
+// call to get the object at the specified index, so the above call to
+// Console.WriteLine(document[0,0].ToString());
+// is actually equivalent to-
+Console.WriteLine(document[DXFilter.Children, DXObject.At(0), DXFilter.Children, DXObject.At(0)].ToString());
+```
+
+* A `string` 'name' index is converted to `DXFilter.AttributesAndChildren` followed by `DXObject.WithName()`, e.g.
+  `["PurchaseOrders"]` ≡ `[DXFilter.AttributesAndChildren, DXObject.WithName("PurchaseOrders")]`.
+* A `string` 'XPath' index is converted to `DXPath.WithPath`.
+* A `System.Range` is converted to `DXFilter.Children` followed by `DXObject.Span()`, e.g.
+  `[..]` ≡ `[DXFilter.Children, DXObject.Span(..)]`.
+* Any index that is an enumeration is flattened.
+
+We can, of course, specify filters directly to perform extremely powerful (and infinitely extendable) indexing:
+
+```csharp
+// In fact, we can specify any filters as indexers, at this point we get an insight into what is really going on
+// The indexer actually uses the Filter method under the hood, and returns the first item if any, otherwise
+// 'null' (or it can throw an OutOfRangeException if Options.IndexResultIfNotFound is set to Throw).
+//
+// However, the narrowing down to a single result only occurs as the last step, so here we select all descendant
+// nodes of the document, and then find the last comment. ('A comment')
+Console.WriteLine(document[DXFilter.Descendants, DXComment.At(^1)].ToString());
+
+// Here's another example which finds elements called `Item`, with an `Attribute` called `PartNumber`, and selects
+// the second one it sees ('926-AA')
+Console.WriteLine(string.Join(
+    Environment.NewLine,
+    document[
+        DXFilter.DescendantsAndSelf,
+        DXElement.WithName("Item"),
+        DXFilter.Attributes,
+        DXAttribute.WithName("PartNumber", 1)
+    ]));
+```
+
+### Final Index result
+
+As mentioned above, each indexing step filters the results (plural) of the previous step. This 'filtering' can actually
+increase the number of results (e.g. by selecting children). Only in the final step do we select the first result and
+return it.
+
+If the indexer doesn't find at least one result, then the result depends on the `IndexResultIfNotFound`
+option; by default it returns a `null`, but you can change the behaviour to throw an `IndexOutOfRangeException` instead.
+
+## Filter method
+
+Indexing is very powerful, but the final step can potentially throw away useful results. The convention for the dynamics
+is that a property or indexer returns a single result, and a method is used to access multiple results, it should come
+as no surprise that we have supplied a builtin method called `Filter` to return all the results of a set of filtering
+operations (note, that we can customize dynamic name mapping to avoid collisions
+using `DynamicXOptions.MapToBuiltInName` to map a different name to `Filter`).
+
+For example:
+
+```csharp
+foreach (XElement element in document.Filter(
+             // Select the root element.
+             DXFilter.Root,
+             // Then get the direct children
+             DXFilter.Children,
+             // Select the first child with the name 'PurchaseOrder'
+             DXElement.WithName("PurchaseOrder", 0),
+             DXFilter.Children,
+             // Select the last address node
+             DXElement.WithName("Address", ^1),
+             // Finally get all child nodes
+             DXFilter.Children
+         ))
+{
+    Console.WriteLine($"{element.Name.LocalName} = {element.Value}");
+}
+```
+
+However, we can use the filtering system entirely independently of dynamics...
+
+# Filtering
+
+## Introduction
+
+The dynamic `Filter` built-in method and the indexer all use the static `DynamicXObject.Filter` extension methods, by
+passing themselves in as the starting `XObject` along with their `DynamicXOptions`, and converting any
+resulting `XObject`s to their dynamic form before returning.
+
+```csharp
+public static partial class DynamicXObject
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IEnumerable<object> Filter(this XObject input, params object[] indices)
+        => Filter(input.ToEnumerable(), null, indices);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IEnumerable<object> Filter(this XObject input, DynamicXOptions? options, params object[] filters)
+        => Filter(input.ToEnumerable(), options, filters);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static IEnumerable<object> Filter(this IEnumerable<XObject> inputs, params object[] indices)
+        => Filter(inputs, null, indices);
+
+    /// <summary>
+    /// Filters the <paramref name="inputs">input</paramref> <see cref="XObject">XObjects</see>.
+    /// </summary>
+    /// <param name="inputs">The <see cref="XObject">XObjects</see>.</param>
+    /// <param name="options">The <see cref="DynamicXOptions">options</see>, if any; otherwise <see langword="null"/>.</param>
+    /// <param name="filters">The filters.</param>
+    /// <returns>An enumeration of results, which may contain <see cref="XObject">XObjects</see>, and/or
+    /// <see cref="string">strings</see>, <see cref="double">doubles</see> or <see cref="bool">booleans</see>.</returns>
+    public static IEnumerable<object> Filter(this IEnumerable<XObject> inputs, DynamicXOptions? options,
+        params object[] filters)
+    { .. }
+}
+```
+
+However, we can use the filter methods directly to avoid the overhead of dynamics when not required, e.g. we could have
+written the above loop:
+
+```csharp
+// Using the filter method with a dynamic is somewhat inefficient, as we can use it on an XObject directly
+// So here we cast our dynamic directly to the XObject before calling filter.  In this case we 
+// get our result as an enumeration of objects, which we can cast directly to XElements
+foreach (XElement element in ((XDocument) document).Filter(...)) { ... }
+```
+
+Of course, if we have the original `XDocument` or `XObject` we can avoid dynamics entirely, and some users may wish to
+use the library purely for the filter functionality and the power and convenience it offers.
+
+As already explained, all arguments are converted to one or more filters and applied to the result of a previous filter
+operation. A filter is any implementation of `IDynamicXFilter`, allowing for easy extensibility. The interface specifies
+a single method, which is reminiscent of the `Filter` extension methods:
+
+```csharp
+/// <summary>
+/// Lazily filters the <paramref name="inputs">input</paramref> <see cref="XObject">XObjects</see>.
+/// </summary>
+/// <param name="inputs">The <see cref="XObject">XObjects</see>.</param>
+/// <param name="options"></param>
+/// <returns>An enumeration of results, which may contain any object; however, any non-<see cref="XObject"/> will be
+/// discarded by any subsequent filtering.</returns>
+IEnumerable<object> Filter(IEnumerable<XObject> inputs, DynamicXOptions options);
+```
+
+As you can see, although it only accepts an enumeration of `XObject` it returns an enumeration of `object`, this is to
+allow the filter to return any results it likes, which is important for XPaths, which can return a `string`, `double`
+or `bool` value as well as enumeration of `XObject`s. As noted though, any non-`XObject` result is discarded by
+subsequent filters, so if you create a filter that doesn't return any `XObject`s you should clearly indicate it is only
+useful as a 'final' filter.
+
+A large number of filters are included in the library already, all are found in structs and have the naming
+convention `DX[Name]`.
+
+## Navigation Filters
+
+The `DXFilter` struct provides an easy way to create your own filters, by supplying a filter function, but, more
+importantly, contains a number of built-in filters focussed primarily on 'navigation' around the XML tree.
+
+## Type filters
+
+Alongside `DXFilter` we have a number of structs that match the different `XObject` types.
+
+* `DXNode`, `DXComment`, `DXText` and `DXCData` will filter the input for the corresponding type.
+* `DXElement`, `DXAttribute` will filter the input for the corresponding type, and can optionally filter on the `Name`.
+* `DXProcessingInstruction` will filter the input for the corresponding type, and can optionally filter on the `Target`.
+* `DXObject` will match any `XObject`, but can optionally match the `DXElement`, `DXAttribute` `Name`, and/or
+  the `DXProcessingInstruction` `Target`
+
+All the type filters expose a `Range`, and can be constructed with either a `Range`, an `Index` or an integer (the last
+two are effectively ranges with a single entry). Not only can this allow for a subset of results, it can even be used to
+reverse the order, by using a range such as `^0..0` (or `DXObject.Reverse`). Note, that due to the limitation of `Range`
+and `Index`, when we specify a range where `Range.Start` > `Range.End`, we treat the start as _exclusive_ and the end
+as _inclusive_ (i.e. the lower index is always `inclusive`, and the upper index _exclusive_), as such a range of `4..1`,
+will return items from index _3_ to _1_ (as _4_ is exclusive being the higher index).
+
+## XPath filters
+
+As [encountered above](#filter-indices), the `DXPath` filter that introduces the full power
+of [XPath expressions](https://developer.mozilla.org/en-US/docs/Web/XPath), allowing for XPath evaluation. Like the type
+filters, it too can have an optional `Index` or `Range` to further restrict the result set.
+
 # Customizing behaviour
 
-The `dynamic? ToDynamic(DynamicXOptions?)` extension method takes an optional `DynamicXOptions` object that allows for
-powerful customization of how the system works.
+The `dynamic? ToDynamic(DynamicXOptions?)` extension method and the `Filter` extension methods (when called directly)
+take an optional `DynamicXOptions` object that allows for powerful customization of how the system works.
 
 **TODO Document options with examples**
 
@@ -306,9 +560,9 @@ objects -
 [see the notes on implementing IDynamicMetaObjectProvider ](https://docs.microsoft.com/en-us/dotnet/api/system.dynamic.idynamicmetaobjectprovider?view=net-6.0))
 .
 
-For this reason, you should make liberal use of the
-[indexer functionality](#indexer) to get to the desired node, whenever possible, as it too avoids creating dynamics
-until it returns a result.
+For this reason, you should make liberal use of the [Filtering functionality](#filtering), either directly (preferably)
+or via the [indexer functionality](#indexer) to get to the desired node(s), whenever possible, as it too avoids creating
+dynamics.
 
 Ultimately, the library allows for very clean code, and actually does quite a bit to prevent some of the common errors (
 e.g. by returning an empty enumeration when no nodes are found, rather than `null`). That trade off makes it ideal for

@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
-using System.Xml.XPath;
 
 namespace DevDecoder.DynamicXml;
 
@@ -133,7 +132,7 @@ public static partial class DynamicXObject
         }
 
         /// <summary>
-        /// The method info for the `Filter` method.
+        ///     The method info for the `Filter` method.
         /// </summary>
         private static readonly MethodInfo FilterMethod = typeof(DynamicXObject)
             .GetMethod("Filter",
@@ -185,7 +184,6 @@ public static partial class DynamicXObject
             }
 
             if (builtInName is not null)
-            {
                 try
                 {
                     result = _xObject.GetType().InvokeMember(
@@ -200,7 +198,6 @@ public static partial class DynamicXObject
                 {
                     // ignored
                 }
-            }
 
             switch (_options.InvokeResultIfNotFound)
             {

@@ -9,30 +9,30 @@ using System.Xml.Linq;
 namespace DevDecoder.DynamicXml;
 
 /// <summary>
-///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any 
+///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any
 ///     <see cref="XNode">nodes</see>.
 /// </summary>
 public readonly struct DXNode : IDynamicXFilter
 {
     /// <summary>
-    ///     The <see cref="System.Range"/> of nodes to include.
+    ///     The <see cref="System.Range" /> of nodes to include.
     /// </summary>
     public readonly Range Range;
 
     /// <summary>
     ///     Selects the first node.
     /// </summary>
-    public static readonly DXNode First = new DXNode(0..1);
+    public static readonly DXNode First = new(..1);
 
     /// <summary>
     ///     Selects the last node.
     /// </summary>
-    public static readonly DXNode Last = new DXNode(^1..^0);
+    public static readonly DXNode Last = new(^1..);
 
     /// <summary>
     ///     Creates new <see cref="DXNode" />
     /// </summary>
-    /// <param name="range">The <see cref="System.Range"/> of nodes to include.</param>
+    /// <param name="range">The <see cref="System.Range" /> of nodes to include.</param>
     public DXNode(Range range)
     {
         Range = range;
@@ -50,7 +50,7 @@ public readonly struct DXNode : IDynamicXFilter
     /// <summary>
     ///     Selects all nodes in the <paramref name="range">specified range</paramref>.
     /// </summary>
-    /// <param name="range"> The <see cref="System.Range"/> of nodes to include.</param>
+    /// <param name="range"> The <see cref="System.Range" /> of nodes to include.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXNode Span(Range range)
     {
@@ -60,7 +60,8 @@ public readonly struct DXNode : IDynamicXFilter
     /// <summary>
     ///     Selects the nodes at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the node. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the node.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXNode At(Index index)
@@ -71,7 +72,8 @@ public readonly struct DXNode : IDynamicXFilter
     /// <summary>
     ///     Selects the nodes at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the node. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the node.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXNode At(int index)
@@ -83,9 +85,9 @@ public readonly struct DXNode : IDynamicXFilter
     #region Conversions
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXNode" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXNode" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXNode" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXNode(int index)
@@ -95,9 +97,9 @@ public readonly struct DXNode : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXNode" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXNode" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXNode" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXNode(Index index)
@@ -106,9 +108,9 @@ public readonly struct DXNode : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Range"/> to <see cref="DXNode" />.
+    ///     Convert from <see cref="Range" /> to <see cref="DXNode" />.
     /// </summary>
-    /// <param name="range">The <see cref="Range"/></param>
+    /// <param name="range">The <see cref="Range" /></param>
     /// <returns>A <see cref="DXNode" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXNode(Range range)
@@ -119,8 +121,10 @@ public readonly struct DXNode : IDynamicXFilter
     #endregion
 
     /// <inheritdoc />
-    public override string ToString() =>
-        $"{Range} node";
+    public override string ToString()
+    {
+        return $"{Range} node";
+    }
 
     /// <inheritdoc />
     IEnumerable<object> IDynamicXFilter.Filter(IEnumerable<XObject> inputs, DynamicXOptions options)
@@ -128,23 +132,20 @@ public readonly struct DXNode : IDynamicXFilter
         var result = inputs.OfType<XNode>();
 
         // Add span if necessary
-        if (!Equals(Range, Range.All))
-        {
-            result = result.Span(Range);
-        }
+        if (!Equals(Range, Range.All)) result = result.Span(Range);
 
         return result;
     }
 }
 
 /// <summary>
-///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any 
+///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any
 ///     <see cref="XElement">elements</see>.
 /// </summary>
 public readonly struct DXElement : IDynamicXFilter
 {
     /// <summary>
-    ///     The <see cref="System.Range"/> of elements to include.
+    ///     The <see cref="System.Range" /> of elements to include.
     /// </summary>
     public readonly Range Range;
 
@@ -159,17 +160,17 @@ public readonly struct DXElement : IDynamicXFilter
     /// <summary>
     ///     Selects the first element.
     /// </summary>
-    public static readonly DXElement First = new DXElement(0..1);
+    public static readonly DXElement First = new(..1);
 
     /// <summary>
     ///     Selects the last element.
     /// </summary>
-    public static readonly DXElement Last = new DXElement(^1..^0);
+    public static readonly DXElement Last = new(^1..);
 
     /// <summary>
     ///     Creates new <see cref="DXElement" />
     /// </summary>
-    /// <param name="range">The <see cref="System.Range"/> of elements to include.</param>
+    /// <param name="range">The <see cref="System.Range" /> of elements to include.</param>
     public DXElement(Range range)
     {
         Name = null;
@@ -190,7 +191,7 @@ public readonly struct DXElement : IDynamicXFilter
     ///     Creates new <see cref="DXElement" />
     /// </summary>
     /// <param name="name">Filters elements by their <see cref="XName.LocalName">local name</see>.</param>
-    /// <param name="range">The <see cref="System.Range"/> of elements to include.</param>
+    /// <param name="range">The <see cref="System.Range" /> of elements to include.</param>
     public DXElement(string name, Range range)
     {
         Name = name;
@@ -209,7 +210,7 @@ public readonly struct DXElement : IDynamicXFilter
     /// <summary>
     ///     Selects all elements in the <paramref name="range">specified range</paramref>.
     /// </summary>
-    /// <param name="range"> The <see cref="System.Range"/> of elements to include.</param>
+    /// <param name="range"> The <see cref="System.Range" /> of elements to include.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXElement Span(Range range)
     {
@@ -219,7 +220,8 @@ public readonly struct DXElement : IDynamicXFilter
     /// <summary>
     ///     Selects the elements at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the element. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the element.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXElement At(Index index)
@@ -230,7 +232,8 @@ public readonly struct DXElement : IDynamicXFilter
     /// <summary>
     ///     Selects the elements at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the element. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the element.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXElement At(int index)
@@ -253,7 +256,7 @@ public readonly struct DXElement : IDynamicXFilter
     ///     Selects child elements with the <paramref name="name">specified name</paramref>.
     /// </summary>
     /// <param name="name">Filters elements by their <see cref="XName.LocalName">local name</see></param>
-    /// <param name="range"> The <see cref="System.Range"/> of elements to include.</param>
+    /// <param name="range"> The <see cref="System.Range" /> of elements to include.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXElement WithName(string name, Range range)
     {
@@ -264,7 +267,7 @@ public readonly struct DXElement : IDynamicXFilter
     ///     Selects child elements with the <paramref name="name">specified name</paramref>.
     /// </summary>
     /// <param name="name">Filters elements by their <see cref="XName.LocalName">local name</see></param>
-    /// <param name="index">The <see cref="System.Index"/> of the element.</param>
+    /// <param name="index">The <see cref="System.Index" /> of the element.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXElement WithName(string name, Index index)
     {
@@ -275,7 +278,7 @@ public readonly struct DXElement : IDynamicXFilter
     ///     Selects child elements with the <paramref name="name">specified name</paramref>.
     /// </summary>
     /// <param name="name">Filters elements by their <see cref="XName.LocalName">local name</see></param>
-    /// <param name="index">The <see cref="System.Index"/> of the element.</param>
+    /// <param name="index">The <see cref="System.Index" /> of the element.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXElement WithName(string name, int index)
     {
@@ -286,9 +289,9 @@ public readonly struct DXElement : IDynamicXFilter
     #region Conversions
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXElement" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXElement" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXElement" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXElement(int index)
@@ -298,9 +301,9 @@ public readonly struct DXElement : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXElement" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXElement" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXElement" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXElement(Index index)
@@ -309,9 +312,9 @@ public readonly struct DXElement : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Range"/> to <see cref="DXElement" />.
+    ///     Convert from <see cref="Range" /> to <see cref="DXElement" />.
     /// </summary>
-    /// <param name="range">The <see cref="Range"/></param>
+    /// <param name="range">The <see cref="Range" /></param>
     /// <returns>A <see cref="DXElement" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXElement(Range range)
@@ -333,8 +336,10 @@ public readonly struct DXElement : IDynamicXFilter
     #endregion
 
     /// <inheritdoc />
-    public override string ToString() =>
-        $"{Range} element{(string.IsNullOrWhiteSpace(Name) ? string.Empty : " ${Name}")}";
+    public override string ToString()
+    {
+        return $"{Range} element{(string.IsNullOrWhiteSpace(Name) ? string.Empty : " ${Name}")}";
+    }
 
     /// <inheritdoc />
     IEnumerable<object> IDynamicXFilter.Filter(IEnumerable<XObject> inputs, DynamicXOptions options)
@@ -350,23 +355,20 @@ public readonly struct DXElement : IDynamicXFilter
         }
 
         // Add span if necessary
-        if (!Equals(Range, Range.All))
-        {
-            result = result.Span(Range);
-        }
+        if (!Equals(Range, Range.All)) result = result.Span(Range);
 
         return result;
     }
 }
 
 /// <summary>
-///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any 
+///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any
 ///     <see cref="XAttribute">attributes</see>.
 /// </summary>
 public readonly struct DXAttribute : IDynamicXFilter
 {
     /// <summary>
-    ///     The <see cref="System.Range"/> of attributes to include.
+    ///     The <see cref="System.Range" /> of attributes to include.
     /// </summary>
     public readonly Range Range;
 
@@ -381,17 +383,17 @@ public readonly struct DXAttribute : IDynamicXFilter
     /// <summary>
     ///     Selects the first attribute.
     /// </summary>
-    public static readonly DXAttribute First = new DXAttribute(0..1);
+    public static readonly DXAttribute First = new(..1);
 
     /// <summary>
     ///     Selects the last attribute.
     /// </summary>
-    public static readonly DXAttribute Last = new DXAttribute(^1..^0);
+    public static readonly DXAttribute Last = new(^1..);
 
     /// <summary>
     ///     Creates new <see cref="DXAttribute" />
     /// </summary>
-    /// <param name="range">The <see cref="System.Range"/> of attributes to include.</param>
+    /// <param name="range">The <see cref="System.Range" /> of attributes to include.</param>
     public DXAttribute(Range range)
     {
         Name = null;
@@ -412,7 +414,7 @@ public readonly struct DXAttribute : IDynamicXFilter
     ///     Creates new <see cref="DXAttribute" />
     /// </summary>
     /// <param name="name">Filters attributes by their <see cref="XName.LocalName">local name</see>.</param>
-    /// <param name="range">The <see cref="System.Range"/> of attributes to include.</param>
+    /// <param name="range">The <see cref="System.Range" /> of attributes to include.</param>
     public DXAttribute(string name, Range range)
     {
         Name = name;
@@ -431,7 +433,7 @@ public readonly struct DXAttribute : IDynamicXFilter
     /// <summary>
     ///     Selects all attributes in the <paramref name="range">specified range</paramref>.
     /// </summary>
-    /// <param name="range"> The <see cref="System.Range"/> of attributes to include.</param>
+    /// <param name="range"> The <see cref="System.Range" /> of attributes to include.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXAttribute Span(Range range)
     {
@@ -441,7 +443,8 @@ public readonly struct DXAttribute : IDynamicXFilter
     /// <summary>
     ///     Selects the attributes at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the attribute. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the attribute.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXAttribute At(Index index)
@@ -452,7 +455,8 @@ public readonly struct DXAttribute : IDynamicXFilter
     /// <summary>
     ///     Selects the attributes at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the attribute. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the attribute.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXAttribute At(int index)
@@ -475,7 +479,7 @@ public readonly struct DXAttribute : IDynamicXFilter
     ///     Selects child attributes with the <paramref name="name">specified name</paramref>.
     /// </summary>
     /// <param name="name">Filters attributes by their <see cref="XName.LocalName">local name</see></param>
-    /// <param name="range"> The <see cref="System.Range"/> of attributes to include.</param>
+    /// <param name="range"> The <see cref="System.Range" /> of attributes to include.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXAttribute WithName(string name, Range range)
     {
@@ -486,7 +490,7 @@ public readonly struct DXAttribute : IDynamicXFilter
     ///     Selects child attributes with the <paramref name="name">specified name</paramref>.
     /// </summary>
     /// <param name="name">Filters attributes by their <see cref="XName.LocalName">local name</see></param>
-    /// <param name="index">The <see cref="System.Index"/> of the attribute.</param>
+    /// <param name="index">The <see cref="System.Index" /> of the attribute.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXAttribute WithName(string name, Index index)
     {
@@ -497,7 +501,7 @@ public readonly struct DXAttribute : IDynamicXFilter
     ///     Selects child attributes with the <paramref name="name">specified name</paramref>.
     /// </summary>
     /// <param name="name">Filters attributes by their <see cref="XName.LocalName">local name</see></param>
-    /// <param name="index">The <see cref="System.Index"/> of the attribute.</param>
+    /// <param name="index">The <see cref="System.Index" /> of the attribute.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXAttribute WithName(string name, int index)
     {
@@ -508,9 +512,9 @@ public readonly struct DXAttribute : IDynamicXFilter
     #region Conversions
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXAttribute" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXAttribute" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXAttribute" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXAttribute(int index)
@@ -520,9 +524,9 @@ public readonly struct DXAttribute : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXAttribute" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXAttribute" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXAttribute" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXAttribute(Index index)
@@ -531,9 +535,9 @@ public readonly struct DXAttribute : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Range"/> to <see cref="DXAttribute" />.
+    ///     Convert from <see cref="Range" /> to <see cref="DXAttribute" />.
     /// </summary>
-    /// <param name="range">The <see cref="Range"/></param>
+    /// <param name="range">The <see cref="Range" /></param>
     /// <returns>A <see cref="DXAttribute" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXAttribute(Range range)
@@ -555,8 +559,10 @@ public readonly struct DXAttribute : IDynamicXFilter
     #endregion
 
     /// <inheritdoc />
-    public override string ToString() =>
-        $"{Range} attribute{(string.IsNullOrWhiteSpace(Name) ? string.Empty : " ${Name}")}";
+    public override string ToString()
+    {
+        return $"{Range} attribute{(string.IsNullOrWhiteSpace(Name) ? string.Empty : " ${Name}")}";
+    }
 
     /// <inheritdoc />
     IEnumerable<object> IDynamicXFilter.Filter(IEnumerable<XObject> inputs, DynamicXOptions options)
@@ -572,23 +578,20 @@ public readonly struct DXAttribute : IDynamicXFilter
         }
 
         // Add span if necessary
-        if (!Equals(Range, Range.All))
-        {
-            result = result.Span(Range);
-        }
+        if (!Equals(Range, Range.All)) result = result.Span(Range);
 
         return result;
     }
 }
 
 /// <summary>
-///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any 
+///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any
 ///     <see cref="XProcessingInstruction">processing instructions</see>.
 /// </summary>
 public readonly struct DXProcessingInstruction : IDynamicXFilter
 {
     /// <summary>
-    ///     The <see cref="System.Range"/> of processing instructions to include.
+    ///     The <see cref="System.Range" /> of processing instructions to include.
     /// </summary>
     public readonly Range Range;
 
@@ -603,17 +606,17 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     /// <summary>
     ///     Selects the first processing instruction.
     /// </summary>
-    public static readonly DXProcessingInstruction First = new DXProcessingInstruction(0..1);
+    public static readonly DXProcessingInstruction First = new(..1);
 
     /// <summary>
     ///     Selects the last processing instruction.
     /// </summary>
-    public static readonly DXProcessingInstruction Last = new DXProcessingInstruction(^1..^0);
+    public static readonly DXProcessingInstruction Last = new(^1..);
 
     /// <summary>
     ///     Creates new <see cref="DXProcessingInstruction" />
     /// </summary>
-    /// <param name="range">The <see cref="System.Range"/> of processing instructions to include.</param>
+    /// <param name="range">The <see cref="System.Range" /> of processing instructions to include.</param>
     public DXProcessingInstruction(Range range)
     {
         Target = null;
@@ -634,7 +637,7 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     ///     Creates new <see cref="DXProcessingInstruction" />
     /// </summary>
     /// <param name="target">Filters processing instructions by their <see cref="XProcessingInstruction.Target">target</see>.</param>
-    /// <param name="range">The <see cref="System.Range"/> of processing instructions to include.</param>
+    /// <param name="range">The <see cref="System.Range" /> of processing instructions to include.</param>
     public DXProcessingInstruction(string target, Range range)
     {
         Target = target;
@@ -653,7 +656,7 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     /// <summary>
     ///     Selects all processing instructions in the <paramref name="range">specified range</paramref>.
     /// </summary>
-    /// <param name="range"> The <see cref="System.Range"/> of processing instructions to include.</param>
+    /// <param name="range"> The <see cref="System.Range" /> of processing instructions to include.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXProcessingInstruction Span(Range range)
     {
@@ -663,7 +666,8 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     /// <summary>
     ///     Selects the processing instructions at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the processing instruction. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the processing instruction.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXProcessingInstruction At(Index index)
@@ -674,7 +678,8 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     /// <summary>
     ///     Selects the processing instructions at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the processing instruction. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the processing instruction.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXProcessingInstruction At(int index)
@@ -686,7 +691,9 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     /// <summary>
     ///     Selects child processing instructions with the <paramref name="target">specified target</paramref>.
     /// </summary>
-    /// <param name="target">Filters processing instructions by their <see cref="XProcessingInstruction.Target">target</see></param>
+    /// <param name="target">
+    ///     Filters processing instructions by their <see cref="XProcessingInstruction.Target">target</see>
+    /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXProcessingInstruction WithTarget(string target)
     {
@@ -696,8 +703,10 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     /// <summary>
     ///     Selects child processing instructions with the <paramref name="target">specified target</paramref>.
     /// </summary>
-    /// <param name="target">Filters processing instructions by their <see cref="XProcessingInstruction.Target">target</see></param>
-    /// <param name="range"> The <see cref="System.Range"/> of processing instructions to include.</param>
+    /// <param name="target">
+    ///     Filters processing instructions by their <see cref="XProcessingInstruction.Target">target</see>
+    /// </param>
+    /// <param name="range"> The <see cref="System.Range" /> of processing instructions to include.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXProcessingInstruction WithTarget(string target, Range range)
     {
@@ -707,8 +716,10 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     /// <summary>
     ///     Selects child processing instructions with the <paramref name="target">specified target</paramref>.
     /// </summary>
-    /// <param name="target">Filters processing instructions by their <see cref="XProcessingInstruction.Target">target</see></param>
-    /// <param name="index">The <see cref="System.Index"/> of the processing instruction.</param>
+    /// <param name="target">
+    ///     Filters processing instructions by their <see cref="XProcessingInstruction.Target">target</see>
+    /// </param>
+    /// <param name="index">The <see cref="System.Index" /> of the processing instruction.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXProcessingInstruction WithTarget(string target, Index index)
     {
@@ -718,8 +729,10 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     /// <summary>
     ///     Selects child processing instructions with the <paramref name="target">specified target</paramref>.
     /// </summary>
-    /// <param name="target">Filters processing instructions by their <see cref="XProcessingInstruction.Target">target</see></param>
-    /// <param name="index">The <see cref="System.Index"/> of the processing instruction.</param>
+    /// <param name="target">
+    ///     Filters processing instructions by their <see cref="XProcessingInstruction.Target">target</see>
+    /// </param>
+    /// <param name="index">The <see cref="System.Index" /> of the processing instruction.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXProcessingInstruction WithTarget(string target, int index)
     {
@@ -730,9 +743,9 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     #region Conversions
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXProcessingInstruction" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXProcessingInstruction" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXProcessingInstruction" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXProcessingInstruction(int index)
@@ -742,9 +755,9 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXProcessingInstruction" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXProcessingInstruction" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXProcessingInstruction" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXProcessingInstruction(Index index)
@@ -753,9 +766,9 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Range"/> to <see cref="DXProcessingInstruction" />.
+    ///     Convert from <see cref="Range" /> to <see cref="DXProcessingInstruction" />.
     /// </summary>
-    /// <param name="range">The <see cref="Range"/></param>
+    /// <param name="range">The <see cref="Range" /></param>
     /// <returns>A <see cref="DXProcessingInstruction" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXProcessingInstruction(Range range)
@@ -766,7 +779,9 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     /// <summary>
     ///     Convert from <see cref="string" /> to <see cref="DXProcessingInstruction" />.
     /// </summary>
-    /// <param name="target">Filters processing instructions by their <see cref="XProcessingInstruction.Target">target</see></param>
+    /// <param name="target">
+    ///     Filters processing instructions by their <see cref="XProcessingInstruction.Target">target</see>
+    /// </param>
     /// <returns>A <see cref="DXProcessingInstruction" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXProcessingInstruction(string target)
@@ -777,8 +792,10 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
     #endregion
 
     /// <inheritdoc />
-    public override string ToString() =>
-        $"{Range} processing instruction{(string.IsNullOrWhiteSpace(Target) ? string.Empty : " ${Target}")}";
+    public override string ToString()
+    {
+        return $"{Range} processing instruction{(string.IsNullOrWhiteSpace(Target) ? string.Empty : " ${Target}")}";
+    }
 
     /// <inheritdoc />
     IEnumerable<object> IDynamicXFilter.Filter(IEnumerable<XObject> inputs, DynamicXOptions options)
@@ -794,40 +811,37 @@ public readonly struct DXProcessingInstruction : IDynamicXFilter
         }
 
         // Add span if necessary
-        if (!Equals(Range, Range.All))
-        {
-            result = result.Span(Range);
-        }
+        if (!Equals(Range, Range.All)) result = result.Span(Range);
 
         return result;
     }
 }
 
 /// <summary>
-///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any 
+///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any
 ///     <see cref="XComment">comments</see>.
 /// </summary>
 public readonly struct DXComment : IDynamicXFilter
 {
     /// <summary>
-    ///     The <see cref="System.Range"/> of comments to include.
+    ///     The <see cref="System.Range" /> of comments to include.
     /// </summary>
     public readonly Range Range;
 
     /// <summary>
     ///     Selects the first comment.
     /// </summary>
-    public static readonly DXComment First = new DXComment(0..1);
+    public static readonly DXComment First = new(..1);
 
     /// <summary>
     ///     Selects the last comment.
     /// </summary>
-    public static readonly DXComment Last = new DXComment(^1..^0);
+    public static readonly DXComment Last = new(^1..);
 
     /// <summary>
     ///     Creates new <see cref="DXComment" />
     /// </summary>
-    /// <param name="range">The <see cref="System.Range"/> of comments to include.</param>
+    /// <param name="range">The <see cref="System.Range" /> of comments to include.</param>
     public DXComment(Range range)
     {
         Range = range;
@@ -845,7 +859,7 @@ public readonly struct DXComment : IDynamicXFilter
     /// <summary>
     ///     Selects all comments in the <paramref name="range">specified range</paramref>.
     /// </summary>
-    /// <param name="range"> The <see cref="System.Range"/> of comments to include.</param>
+    /// <param name="range"> The <see cref="System.Range" /> of comments to include.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXComment Span(Range range)
     {
@@ -855,7 +869,8 @@ public readonly struct DXComment : IDynamicXFilter
     /// <summary>
     ///     Selects the comments at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the comment. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the comment.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXComment At(Index index)
@@ -866,7 +881,8 @@ public readonly struct DXComment : IDynamicXFilter
     /// <summary>
     ///     Selects the comments at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the comment. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the comment.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXComment At(int index)
@@ -878,9 +894,9 @@ public readonly struct DXComment : IDynamicXFilter
     #region Conversions
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXComment" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXComment" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXComment" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXComment(int index)
@@ -890,9 +906,9 @@ public readonly struct DXComment : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXComment" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXComment" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXComment" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXComment(Index index)
@@ -901,9 +917,9 @@ public readonly struct DXComment : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Range"/> to <see cref="DXComment" />.
+    ///     Convert from <see cref="Range" /> to <see cref="DXComment" />.
     /// </summary>
-    /// <param name="range">The <see cref="Range"/></param>
+    /// <param name="range">The <see cref="Range" /></param>
     /// <returns>A <see cref="DXComment" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXComment(Range range)
@@ -914,8 +930,10 @@ public readonly struct DXComment : IDynamicXFilter
     #endregion
 
     /// <inheritdoc />
-    public override string ToString() =>
-        $"{Range} comment";
+    public override string ToString()
+    {
+        return $"{Range} comment";
+    }
 
     /// <inheritdoc />
     IEnumerable<object> IDynamicXFilter.Filter(IEnumerable<XObject> inputs, DynamicXOptions options)
@@ -923,40 +941,37 @@ public readonly struct DXComment : IDynamicXFilter
         var result = inputs.OfType<XComment>();
 
         // Add span if necessary
-        if (!Equals(Range, Range.All))
-        {
-            result = result.Span(Range);
-        }
+        if (!Equals(Range, Range.All)) result = result.Span(Range);
 
         return result;
     }
 }
 
 /// <summary>
-///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any 
+///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any
 ///     <see cref="XText">text blocks</see>.
 /// </summary>
 public readonly struct DXText : IDynamicXFilter
 {
     /// <summary>
-    ///     The <see cref="System.Range"/> of text blocks to include.
+    ///     The <see cref="System.Range" /> of text blocks to include.
     /// </summary>
     public readonly Range Range;
 
     /// <summary>
     ///     Selects the first text block.
     /// </summary>
-    public static readonly DXText First = new DXText(0..1);
+    public static readonly DXText First = new(..1);
 
     /// <summary>
     ///     Selects the last text block.
     /// </summary>
-    public static readonly DXText Last = new DXText(^1..^0);
+    public static readonly DXText Last = new(^1..);
 
     /// <summary>
     ///     Creates new <see cref="DXText" />
     /// </summary>
-    /// <param name="range">The <see cref="System.Range"/> of text blocks to include.</param>
+    /// <param name="range">The <see cref="System.Range" /> of text blocks to include.</param>
     public DXText(Range range)
     {
         Range = range;
@@ -974,7 +989,7 @@ public readonly struct DXText : IDynamicXFilter
     /// <summary>
     ///     Selects all text blocks in the <paramref name="range">specified range</paramref>.
     /// </summary>
-    /// <param name="range"> The <see cref="System.Range"/> of text blocks to include.</param>
+    /// <param name="range"> The <see cref="System.Range" /> of text blocks to include.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXText Span(Range range)
     {
@@ -984,7 +999,8 @@ public readonly struct DXText : IDynamicXFilter
     /// <summary>
     ///     Selects the text blocks at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the text block. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the text block.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXText At(Index index)
@@ -995,7 +1011,8 @@ public readonly struct DXText : IDynamicXFilter
     /// <summary>
     ///     Selects the text blocks at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the text block. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the text block.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXText At(int index)
@@ -1007,9 +1024,9 @@ public readonly struct DXText : IDynamicXFilter
     #region Conversions
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXText" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXText" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXText" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXText(int index)
@@ -1019,9 +1036,9 @@ public readonly struct DXText : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXText" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXText" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXText" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXText(Index index)
@@ -1030,9 +1047,9 @@ public readonly struct DXText : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Range"/> to <see cref="DXText" />.
+    ///     Convert from <see cref="Range" /> to <see cref="DXText" />.
     /// </summary>
-    /// <param name="range">The <see cref="Range"/></param>
+    /// <param name="range">The <see cref="Range" /></param>
     /// <returns>A <see cref="DXText" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXText(Range range)
@@ -1043,8 +1060,10 @@ public readonly struct DXText : IDynamicXFilter
     #endregion
 
     /// <inheritdoc />
-    public override string ToString() =>
-        $"{Range} text block";
+    public override string ToString()
+    {
+        return $"{Range} text block";
+    }
 
     /// <inheritdoc />
     IEnumerable<object> IDynamicXFilter.Filter(IEnumerable<XObject> inputs, DynamicXOptions options)
@@ -1052,40 +1071,37 @@ public readonly struct DXText : IDynamicXFilter
         var result = inputs.OfType<XText>();
 
         // Add span if necessary
-        if (!Equals(Range, Range.All))
-        {
-            result = result.Span(Range);
-        }
+        if (!Equals(Range, Range.All)) result = result.Span(Range);
 
         return result;
     }
 }
 
 /// <summary>
-///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any 
+///     Creates an index for a <see cref="DynamicXObject">dynamic XObject</see> that will match any
 ///     <see cref="XCData">character data blocks</see>.
 /// </summary>
 public readonly struct DXCData : IDynamicXFilter
 {
     /// <summary>
-    ///     The <see cref="System.Range"/> of character data blocks to include.
+    ///     The <see cref="System.Range" /> of character data blocks to include.
     /// </summary>
     public readonly Range Range;
 
     /// <summary>
     ///     Selects the first character data block.
     /// </summary>
-    public static readonly DXCData First = new DXCData(0..1);
+    public static readonly DXCData First = new(..1);
 
     /// <summary>
     ///     Selects the last character data block.
     /// </summary>
-    public static readonly DXCData Last = new DXCData(^1..^0);
+    public static readonly DXCData Last = new(^1..);
 
     /// <summary>
     ///     Creates new <see cref="DXCData" />
     /// </summary>
-    /// <param name="range">The <see cref="System.Range"/> of character data blocks to include.</param>
+    /// <param name="range">The <see cref="System.Range" /> of character data blocks to include.</param>
     public DXCData(Range range)
     {
         Range = range;
@@ -1103,7 +1119,7 @@ public readonly struct DXCData : IDynamicXFilter
     /// <summary>
     ///     Selects all character data blocks in the <paramref name="range">specified range</paramref>.
     /// </summary>
-    /// <param name="range"> The <see cref="System.Range"/> of character data blocks to include.</param>
+    /// <param name="range"> The <see cref="System.Range" /> of character data blocks to include.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXCData Span(Range range)
     {
@@ -1113,7 +1129,8 @@ public readonly struct DXCData : IDynamicXFilter
     /// <summary>
     ///     Selects the character data blocks at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the character data block. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the character data block.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXCData At(Index index)
@@ -1124,7 +1141,8 @@ public readonly struct DXCData : IDynamicXFilter
     /// <summary>
     ///     Selects the character data blocks at the <paramref name="index">specified index</paramref>.
     /// </summary>
-    /// <param name="index">The <see cref="System.Index"/> of the character data block. 
+    /// <param name="index">
+    ///     The <see cref="System.Index" /> of the character data block.
     /// </param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static DXCData At(int index)
@@ -1136,9 +1154,9 @@ public readonly struct DXCData : IDynamicXFilter
     #region Conversions
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXCData" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXCData" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXCData" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXCData(int index)
@@ -1148,9 +1166,9 @@ public readonly struct DXCData : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Index"/> to <see cref="DXCData" />.
+    ///     Convert from <see cref="Index" /> to <see cref="DXCData" />.
     /// </summary>
-    /// <param name="index">The <see cref="Index"/></param>
+    /// <param name="index">The <see cref="Index" /></param>
     /// <returns>A <see cref="DXCData" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXCData(Index index)
@@ -1159,9 +1177,9 @@ public readonly struct DXCData : IDynamicXFilter
     }
 
     /// <summary>
-    ///     Convert from <see cref="Range"/> to <see cref="DXCData" />.
+    ///     Convert from <see cref="Range" /> to <see cref="DXCData" />.
     /// </summary>
-    /// <param name="range">The <see cref="Range"/></param>
+    /// <param name="range">The <see cref="Range" /></param>
     /// <returns>A <see cref="DXCData" /></returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator DXCData(Range range)
@@ -1172,8 +1190,10 @@ public readonly struct DXCData : IDynamicXFilter
     #endregion
 
     /// <inheritdoc />
-    public override string ToString() =>
-        $"{Range} character data block";
+    public override string ToString()
+    {
+        return $"{Range} character data block";
+    }
 
     /// <inheritdoc />
     IEnumerable<object> IDynamicXFilter.Filter(IEnumerable<XObject> inputs, DynamicXOptions options)
@@ -1181,10 +1201,7 @@ public readonly struct DXCData : IDynamicXFilter
         var result = inputs.OfType<XCData>();
 
         // Add span if necessary
-        if (!Equals(Range, Range.All))
-        {
-            result = result.Span(Range);
-        }
+        if (!Equals(Range, Range.All)) result = result.Span(Range);
 
         return result;
     }

@@ -38,6 +38,11 @@ public readonly struct DXObject : IDynamicXFilter
     public static readonly DXObject Last = new(^1..);
 
     /// <summary>
+    ///     Reverses the objects.
+    /// </summary>
+    public static readonly DXObject Reverse = new(^0..0);
+
+    /// <summary>
     ///     Creates new <see cref="DXObject" />
     /// </summary>
     /// <param name="range">The <see cref="System.Range" /> of objects to include.</param>

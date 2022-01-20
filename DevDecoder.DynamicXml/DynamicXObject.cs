@@ -36,47 +36,61 @@ public static partial class DynamicXObject
     }
 
     /// <summary>
-    /// Filters the <paramref name="input"/> <see cref="XObject"/>.
+    ///     Filters the <paramref name="input" /> <see cref="XObject" />.
     /// </summary>
-    /// <param name="input">The <see cref="XObject"/>.</param>
+    /// <param name="input">The <see cref="XObject" />.</param>
     /// <param name="indices">The indices.</param>
-    /// <returns>An enumeration of results, which may contain <see cref="XObject">XObjects</see>, and/or
-    /// <see cref="string">strings</see>, <see cref="double">doubles</see> or <see cref="bool">booleans</see>.</returns>
+    /// <returns>
+    ///     An enumeration of results, which may contain <see cref="XObject">XObjects</see>, and/or
+    ///     <see cref="string">strings</see>, <see cref="double">doubles</see> or <see cref="bool">booleans</see>.
+    /// </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static IEnumerable<object> Filter(this XObject input, params object[] indices)
-        => Filter(input.ToEnumerable(), null, indices);
+    {
+        return Filter(input.ToEnumerable(), null, indices);
+    }
 
     /// <summary>
-    /// Filters the <paramref name="input"/> <see cref="XObject"/>.
+    ///     Filters the <paramref name="input" /> <see cref="XObject" />.
     /// </summary>
-    /// <param name="input">The <see cref="XObject"/>.</param>
-    /// <param name="options">The <see cref="DynamicXOptions">options</see>, if any; otherwise <see langword="null"/>.</param>
+    /// <param name="input">The <see cref="XObject" />.</param>
+    /// <param name="options">The <see cref="DynamicXOptions">options</see>, if any; otherwise <see langword="null" />.</param>
     /// <param name="filters">The indices.</param>
-    /// <returns>An enumeration of results, which may contain <see cref="XObject">XObjects</see>, and/or
-    /// <see cref="string">strings</see>, <see cref="double">doubles</see> or <see cref="bool">booleans</see>.</returns>
+    /// <returns>
+    ///     An enumeration of results, which may contain <see cref="XObject">XObjects</see>, and/or
+    ///     <see cref="string">strings</see>, <see cref="double">doubles</see> or <see cref="bool">booleans</see>.
+    /// </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static IEnumerable<object> Filter(this XObject input, DynamicXOptions? options, params object[] filters)
-        => Filter(input.ToEnumerable(), options, filters);
+    {
+        return Filter(input.ToEnumerable(), options, filters);
+    }
 
     /// <summary>
-    /// Filters the <paramref name="inputs">input</paramref> <see cref="XObject">XObjects</see>.
+    ///     Filters the <paramref name="inputs">input</paramref> <see cref="XObject">XObjects</see>.
     /// </summary>
     /// <param name="inputs">The <see cref="XObject">XObjects</see>.</param>
     /// <param name="indices">The indices.</param>
-    /// <returns>An enumeration of results, which may contain <see cref="XObject">XObjects</see>, and/or
-    /// <see cref="string">strings</see>, <see cref="double">doubles</see> or <see cref="bool">booleans</see>.</returns>
+    /// <returns>
+    ///     An enumeration of results, which may contain <see cref="XObject">XObjects</see>, and/or
+    ///     <see cref="string">strings</see>, <see cref="double">doubles</see> or <see cref="bool">booleans</see>.
+    /// </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static IEnumerable<object> Filter(this IEnumerable<XObject> inputs, params object[] indices)
-        => Filter(inputs, null, indices);
+    {
+        return Filter(inputs, null, indices);
+    }
 
     /// <summary>
-    /// Filters the <paramref name="inputs">input</paramref> <see cref="XObject">XObjects</see>.
+    ///     Filters the <paramref name="inputs">input</paramref> <see cref="XObject">XObjects</see>.
     /// </summary>
     /// <param name="inputs">The <see cref="XObject">XObjects</see>.</param>
-    /// <param name="options">The <see cref="DynamicXOptions">options</see>, if any; otherwise <see langword="null"/>.</param>
+    /// <param name="options">The <see cref="DynamicXOptions">options</see>, if any; otherwise <see langword="null" />.</param>
     /// <param name="filters">The filters.</param>
-    /// <returns>An enumeration of results, which may contain <see cref="XObject">XObjects</see>, and/or
-    /// <see cref="string">strings</see>, <see cref="double">doubles</see> or <see cref="bool">booleans</see>.</returns>
+    /// <returns>
+    ///     An enumeration of results, which may contain <see cref="XObject">XObjects</see>, and/or
+    ///     <see cref="string">strings</see>, <see cref="double">doubles</see> or <see cref="bool">booleans</see>.
+    /// </returns>
     public static IEnumerable<object> Filter(this IEnumerable<XObject> inputs, DynamicXOptions? options,
         params object[] filters)
     {
@@ -99,7 +113,7 @@ public static partial class DynamicXObject
     }
 
     /// <summary>
-    /// Converts a single <see cref="XObject"/> into an enumerable.
+    ///     Converts a single <see cref="XObject" /> into an enumerable.
     /// </summary>
     /// <param name="input">The input object.</param>
     /// <returns>An enumeration that yields the object.</returns>
@@ -109,11 +123,15 @@ public static partial class DynamicXObject
     }
 
     /// <summary>
-    /// Flattens an input array of indices into an <see cref="IEnumerable{T}">enumeration</see> of <see cref="IDynamicXFilter"/>.
+    ///     Flattens an input array of indices into an <see cref="IEnumerable{T}">enumeration</see> of
+    ///     <see cref="IDynamicXFilter" />.
     /// </summary>
     /// <param name="indices">The indices.</param>
-    /// <param name="throwIfInvalidIndex"><see langword="true"/> if should throw <see cref="IndexOutOfRangeException"/> for invalid index type.</param>
-    /// <returns>An <see cref="IEnumerable{T}">enumeration</see> of <see cref="IDynamicXFilter"/></returns>
+    /// <param name="throwIfInvalidIndex">
+    ///     <see langword="true" /> if should throw <see cref="IndexOutOfRangeException" /> for
+    ///     invalid index type.
+    /// </param>
+    /// <returns>An <see cref="IEnumerable{T}">enumeration</see> of <see cref="IDynamicXFilter" /></returns>
     private static IEnumerable<IDynamicXFilter> Flatten(this object[] indices, bool throwIfInvalidIndex)
     {
         var stack = new Stack<IEnumerator>();
@@ -137,6 +155,7 @@ public static partial class DynamicXObject
                         break;
 
                     case Range range:
+                        yield return DXFilter.Children;
                         yield return DXObject.Span(range);
                         break;
 
@@ -154,7 +173,16 @@ public static partial class DynamicXObject
                             name = null;
                         }
 
-                        yield return name is null ? DXPath.WithPath(str) : DXObject.WithName(name);
+                        if (name is null)
+                        {
+                            // We have an XPath.
+                            yield return DXPath.WithPath(str);
+                            continue;
+                        }
+
+                        // We scan attributes first then children:
+                        yield return DXFilter.AttributesAndChildren;
+                        yield return DXObject.WithName(name);
                         continue;
 
                     /*
@@ -192,10 +220,8 @@ public static partial class DynamicXObject
                     // Anything else is an unsupported index type.
                     default:
                         if (throwIfInvalidIndex)
-                        {
                             throw new IndexOutOfRangeException(
                                 $"{current?.GetType().ToString() ?? "null"} is not a valid index");
-                        }
 
                         // Just skip
                         continue;
@@ -210,7 +236,7 @@ public static partial class DynamicXObject
     /// </summary>
     /// <param name="number">The number</param>
     /// <param name="provider">The format provider</param>
-    /// <returns>The ordinal string.</returns>    
+    /// <returns>The ordinal string.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static string ToOrdinal(this long number, IFormatProvider? provider = null)
     {

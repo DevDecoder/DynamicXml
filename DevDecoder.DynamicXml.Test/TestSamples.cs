@@ -109,11 +109,37 @@ public class TestSamples
         // Item, it then writes out the PartNumber (898-AM)
         Console.WriteLine(document[0, ^1, ^1, ^1].PartNumber.ToString());
 
+        // We can get access nodes and attributes by string, when we supply a string, it first searches attributes on
+        // the current node, then children for a matching element (or processing instruction).
+        // Result: `99503`
+        Console.WriteLine(document["PurchaseOrders", "PurchaseOrder", "PurchaseOrderNumber"].ToString());
+
+        // The equivalent XPath
+        // Result: `99503`
+        Console.WriteLine(document["string(/PurchaseOrders/PurchaseOrder[1]/@PurchaseOrderNumber)"].ToString());
+
+        // Here we use the `..` range (i.e. all) to explicitly say we're searching for any child node of the root
+        // element that contains an attribute, element or processing instruction with the specified name/target.
+        // Result: `99503`
+        Console.WriteLine(document[0, .., "PurchaseOrderNumber"].ToString());
+
+        // Our indexers will 'flatten' any enumeration (recursively), which is useful as it allows us to create complex
+        // reusable indices, which can be passed to multiple calls
+        // Result: `99503`
+        var allPurchaseOrders = new object[] {0, "PurchaseOrder"};
+        Console.WriteLine(document[allPurchaseOrders, "PurchaseOrderNumber"].ToString());
+
+        // When we pass an integer or Index as filter, it is first converted to a call to get any children, and then a
+        // call to get the object at the specified index, so the above call to
+        // Console.WriteLine(document[0,0].ToString());
+        // is actually equivalent to-
+        Console.WriteLine(document[DXFilter.Children, DXObject.At(0), DXFilter.Children, DXObject.At(0)].ToString());
+
         // In fact, we can specify any filters as indexers, at this point we get an insight into what is really going on
         // The indexer actually uses the Filter method under the hood, and returns the first item if any, otherwise
         // 'null' (or it can throw an OutOfRangeException if Options.IndexResultIfNotFound is set to Throw).
         //
-        // However, the narrowing down to a single result only occurs as the last step, so we here we select all descendant
+        // However, the narrowing down to a single result only occurs as the last step, so  here we select all descendant
         // nodes of the document, and then find the last comment. ('A comment')
         Console.WriteLine(document[DXFilter.Descendants, DXComment.At(^1)].ToString());
 
@@ -127,12 +153,6 @@ public class TestSamples
                 DXFilter.Attributes,
                 DXAttribute.WithName("PartNumber", 1)
             ]));
-
-        // When we pass an integer or Index as filter, it is first converted to a call to get any children, and then a
-        // call to get the object at the specified index, so the above call to
-        // Console.WriteLine(document[0,0].ToString());
-        // is actually equivalent to-
-        Console.WriteLine(document[DXFilter.Children, DXObject.At(0), DXFilter.Children, DXObject.At(0)].ToString());
     }
 
     [Fact]
@@ -154,6 +174,7 @@ public class TestSamples
         // Using the filter method with a dynamic is somewhat inefficient, as we can use it on an XObject directly
         // So here we cast our dynamic directly to the XObject before calling filter.  In this case we 
         // get our result as an enumeration of objects, which we can cast directly to XElements
+        // foreach (XElement element in document.Filter(...)) {...}
         foreach (XElement element in ((XDocument) document).Filter(
                      // Select the root element.
                      DXFilter.Root,
@@ -167,8 +188,6 @@ public class TestSamples
                      // Finally get all child nodes
                      DXFilter.Children
                  ))
-        {
             Console.WriteLine($"{element.Name.LocalName} = {element.Value}");
-        }
     }
 }

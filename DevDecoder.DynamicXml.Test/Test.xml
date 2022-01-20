@@ -64,6 +64,7 @@
         </Items>
     </PurchaseOrder>
     <PurchaseOrder PurchaseOrderNumber="99504" OrderDate="1999-10-22">
+        <!-- This is the last purchase order -->
         <Address Type="Shipping">
             <Name>Jessica Arnold</Name>
             <Street>4055 Madison Ave</Street>

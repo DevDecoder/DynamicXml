@@ -14,7 +14,7 @@ namespace DevDecoder.DynamicXml;
 public class DXPath : IDynamicXFilter
 {
     /// <summary>
-    ///     The <see cref="System.Range"/> of elements to include.
+    ///     The <see cref="System.Range" /> of elements to include.
     /// </summary>
     public readonly Range Range;
 
@@ -36,76 +36,13 @@ public class DXPath : IDynamicXFilter
     /// <summary>
     ///     Creates new <see cref="DXPath" />
     /// </summary>
-    /// <param name="range">The <see cref="System.Range"/> of results to include.</param>
+    /// <param name="range">The <see cref="System.Range" /> of results to include.</param>
     /// <param name="xPath">The XPath.</param>
     public DXPath(string xPath, Range range)
     {
         XPath = xPath;
         Range = range;
     }
-
-    /// <summary>
-    ///     Selects child elements with the <paramref name="xPath">specified XPath</paramref>.
-    /// </summary>
-    /// <param name="xPath">The XPath.</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static DXPath WithPath(string xPath)
-    {
-        return new DXPath(xPath);
-    }
-
-    /// <summary>
-    ///     Selects child elements with the <paramref name="xPath">specified XPath</paramref>.
-    /// </summary>
-    /// <param name="xPath">The XPath.</param>
-    /// <param name="range"> The <see cref="System.Range"/> of elements to include.</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static DXPath WithPath(string xPath, Range range)
-    {
-        return new DXPath(xPath, range);
-    }
-
-    /// <summary>
-    ///     Selects child elements with the <paramref name="xPath">specified XPath</paramref>.
-    /// </summary>
-    /// <param name="xPath">The XPath.</param>
-    /// <param name="index">The <see cref="System.Index"/> of the element.</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static DXPath WithPath(string xPath, Index index)
-    {
-        return new DXPath(xPath, index.ToRange());
-    }
-
-    /// <summary>
-    ///     Selects child elements with the <paramref name="xPath">specified XPath</paramref>.
-    /// </summary>
-    /// <param name="xPath">The XPath.</param>
-    /// <param name="index">The <see cref="System.Index"/> of the element.</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static DXPath WithPath(string xPath, int index)
-    {
-        var i = index < 0 ? Index.FromEnd(-index) : Index.FromStart(index);
-        return new DXPath(xPath, i.ToRange());
-    }
-
-    #region Conversions
-
-    /// <summary>
-    ///     Convert from <see cref="string" /> to <see cref="DXPath" />.
-    /// </summary>
-    /// <param name="xPath">The XPath.</param>
-    /// <returns>A <see cref="DXPath" /></returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator DXPath(string xPath)
-    {
-        return new DXPath(xPath);
-    }
-
-    #endregion
-
-    /// <inheritdoc />
-    public override string ToString() =>
-        $"{Range} XPath: {XPath}";
 
     /// <inheritdoc />
     IEnumerable<object> IDynamicXFilter.Filter(IEnumerable<XObject> inputs, DynamicXOptions options)
@@ -138,11 +75,73 @@ public class DXPath : IDynamicXFilter
         };
 
         // Add span if necessary
-        if (!Equals(Range, Range.All))
-        {
-            result = result.Span(Range);
-        }
+        if (!Equals(Range, Range.All)) result = result.Span(Range);
 
         return result;
+    }
+
+    /// <summary>
+    ///     Selects child elements with the <paramref name="xPath">specified XPath</paramref>.
+    /// </summary>
+    /// <param name="xPath">The XPath.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DXPath WithPath(string xPath)
+    {
+        return new DXPath(xPath);
+    }
+
+    /// <summary>
+    ///     Selects child elements with the <paramref name="xPath">specified XPath</paramref>.
+    /// </summary>
+    /// <param name="xPath">The XPath.</param>
+    /// <param name="range"> The <see cref="System.Range" /> of elements to include.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DXPath WithPath(string xPath, Range range)
+    {
+        return new DXPath(xPath, range);
+    }
+
+    /// <summary>
+    ///     Selects child elements with the <paramref name="xPath">specified XPath</paramref>.
+    /// </summary>
+    /// <param name="xPath">The XPath.</param>
+    /// <param name="index">The <see cref="System.Index" /> of the element.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DXPath WithPath(string xPath, Index index)
+    {
+        return new DXPath(xPath, index.ToRange());
+    }
+
+    /// <summary>
+    ///     Selects child elements with the <paramref name="xPath">specified XPath</paramref>.
+    /// </summary>
+    /// <param name="xPath">The XPath.</param>
+    /// <param name="index">The <see cref="System.Index" /> of the element.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static DXPath WithPath(string xPath, int index)
+    {
+        var i = index < 0 ? Index.FromEnd(-index) : Index.FromStart(index);
+        return new DXPath(xPath, i.ToRange());
+    }
+
+    #region Conversions
+
+    /// <summary>
+    ///     Convert from <see cref="string" /> to <see cref="DXPath" />.
+    /// </summary>
+    /// <param name="xPath">The XPath.</param>
+    /// <returns>A <see cref="DXPath" /></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static implicit operator DXPath(string xPath)
+    {
+        return new DXPath(xPath);
+    }
+
+    #endregion
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        return $"{Range} XPath: {XPath}";
     }
 }
