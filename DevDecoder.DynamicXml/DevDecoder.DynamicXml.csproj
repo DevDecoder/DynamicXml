@@ -4,6 +4,28 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <RootNamespace>DevDecoder.DynamicXml</RootNamespace>
+        <PackageId>HIDDevices</PackageId>
+        <Authors>Craig Dean</Authors>
+        <Company>DevDecoder</Company>
+        <PackageDescription>Cross-platform .NET Standard library for easy manipulation of XML</PackageDescription>
+        <RepositoryUrl>https://github.com/DevDecoder/HIDDevices</RepositoryUrl>
+        <PackageDescription>Cross-platform .NET Standard library for easy manipulation of XML</PackageDescription>
+        <Copyright>2021-2022 Craig Dean</Copyright>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/DevDecoder/DynamicXml</PackageProjectUrl>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+        <RepositoryType>git</RepositoryType>
+        <PackageTags>XML, XObject, XNode, XElement, XPath, Dynamic</PackageTags>
+        <PackageIcon>DevDecoder Icon.png</PackageIcon>
+        <PackageReleaseNotes>Stable release.</PackageReleaseNotes>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <SignAssembly>false</SignAssembly>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <AssemblyName>DevDecoder.DynamicXml</AssemblyName>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,6 +41,17 @@
             <DesignTime>True</DesignTime>
             <DependentUpon>DXStructs.tt</DependentUpon>
         </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\DevDecoder Icon.png">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
+        <None Include="..\README.md">
+            <Pack>True</Pack>
+            <PackagePath>\</PackagePath>
+        </None>
     </ItemGroup>
 
 </Project>

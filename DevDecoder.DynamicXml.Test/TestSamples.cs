@@ -30,10 +30,15 @@ public class TestSamples
             xDocument = XDocument.Load(stream);
         }
 
+        // Powerful XML filtering system to extract notes
+        // Here we write out all comments (separated by new-lines) in one step.
+        Console.WriteLine(string.Join(Environment.NewLine,
+            xDocument.Filter(DXFilter.Descendants, DXComment.All())));
+
         // Convert to dynamic object
         var document = xDocument.ToDynamic();
 
-        // Get root
+        // Get root element by name
         var purchaseOrders = document.PurchaseOrders;
 
         // Enumerate over all child elements called `PurchaseOrder`

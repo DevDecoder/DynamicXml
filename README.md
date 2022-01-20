@@ -3,23 +3,19 @@
 
 # DynamicXml
 
-**NOTE: This package is currently in development and testing but will be deployed soon.**
-
 Convenience extension method that converts any `XObject` into a `dynamic` for easy access, combined with a powerful XML
 filter.
 
 # Installation
 
-**TODO Build/Publish NuGet**
-
-~~The library is [available via NuGet](https://www.nuget.org/packages?q=DevDecoder.DynamicXml) and is delivered via
-NuGet Package Manager:~~
+The library is [available via NuGet](https://www.nuget.org/packages?q=DevDecoder.DynamicXml) and is delivered via NuGet
+Package Manager:
 
 ```
 Install-Package DevDecoder.DynamicXml
 ```
 
-~~If you are targeting .NET Core, use the following command:~~
+If you are targeting .NET Core, use the following command:
 
 ```
 dotnet add package 
@@ -28,10 +24,9 @@ Install-Package DevDecoder.DynamicXml
 
 # Usage
 
-## Casting to dynamic
-
-To use include the NuGet in your solution and call the `dynamic? ToDynamic(DynamicXOptions?)` extension method on
-any `XObject`, e.g.
+To use include the NuGet in your solution and call the `Filter(DynamicOptions?)` extension method to filter `XObject`s,
+or the `dynamic? ToDynamic(DynamicXOptions?)` extension method on any `XObject`, to cast it to a dynamic, for easy
+access to related `XObject`s e.g.
 
 ```csharp
 // Load XML from embedded file.
@@ -39,9 +34,17 @@ XDocument xDocument;
 using (var stream = Assembly.GetExecutingAssembly()
            .GetManifestResourceStream($"{this.GetType().Namespace}.Test.xml")!)
     xDocument = XDocument.Load(stream);
+            
+// Powerful XML filtering system to extract notes
+// Here we write out all comments (separated by new-lines) in one step.
+Console.WriteLine(string.Join(Environment.NewLine,
+    xDocument.Filter(DXFilter.Descendants, DXComment.All())));
 
 // Convert to dynamic object
 var document = xDocument.ToDynamic();
+
+// Get root element by name
+var purchaseOrders = document.PurchaseOrders;
 ```
 
 ## Example
