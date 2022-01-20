@@ -4,11 +4,11 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <RootNamespace>DevDecoder.DynamicXml</RootNamespace>
-        <PackageId>HIDDevices</PackageId>
+        <PackageId>DevDecoder.DynamicXml</PackageId>
         <Authors>Craig Dean</Authors>
         <Company>DevDecoder</Company>
         <PackageDescription>Cross-platform .NET Standard library for easy manipulation of XML</PackageDescription>
-        <RepositoryUrl>https://github.com/DevDecoder/HIDDevices</RepositoryUrl>
+        <RepositoryUrl>https://github.com/DevDecoder/DynamicXml</RepositoryUrl>
         <PackageDescription>Cross-platform .NET Standard library for easy manipulation of XML</PackageDescription>
         <Copyright>2021-2022 Craig Dean</Copyright>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
