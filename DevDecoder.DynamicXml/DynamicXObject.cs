@@ -229,26 +229,4 @@ public static partial class DynamicXObject
             }
         }
     }
-
-
-    /// <summary>
-    ///     Returns the number as an ordinal.
-    /// </summary>
-    /// <param name="number">The number</param>
-    /// <param name="provider">The format provider</param>
-    /// <returns>The ordinal string.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static string ToOrdinal(this long number, IFormatProvider? provider = null)
-    {
-        var abs = Math.Abs(number);
-        return abs / 10 == 1
-            ? string.Create(provider, stackalloc char[64], $"{number}th")
-            : (abs % 10) switch
-            {
-                1 => string.Create(provider, stackalloc char[64], $"{number}st"),
-                2 => string.Create(provider, stackalloc char[64], $"{number}nd"),
-                3 => string.Create(provider, stackalloc char[64], $"{number}rd"),
-                _ => string.Create(provider, stackalloc char[64], $"{number}th")
-            };
-    }
 }
