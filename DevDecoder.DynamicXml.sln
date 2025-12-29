@@ -9,6 +9,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Non-project", "Non-project"
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevDecoder.DynamicXml.Benchmarks", "DevDecoder.DynamicXml.Benchmarks\DevDecoder.DynamicXml.Benchmarks.csproj", "{6EAD8BDE-73B0-401C-AAAC-A1F8E3FC0BED}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,5 +25,9 @@ Global
 		{12B3491E-16C1-4F9F-A312-9870770A2669}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{12B3491E-16C1-4F9F-A312-9870770A2669}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{12B3491E-16C1-4F9F-A312-9870770A2669}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6EAD8BDE-73B0-401C-AAAC-A1F8E3FC0BED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EAD8BDE-73B0-401C-AAAC-A1F8E3FC0BED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6EAD8BDE-73B0-401C-AAAC-A1F8E3FC0BED}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{6EAD8BDE-73B0-401C-AAAC-A1F8E3FC0BED}.Debug|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
